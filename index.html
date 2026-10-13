@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="EvjkGSU9djGmDbmj7wuJpI"><head data-page-node-id="gXqbhgMvpIxFgAmktY6TDX">
+<meta charset="UTF-8" data-page-node-id="3fHZceCvDtZWQn3CcdnsHz">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" data-page-node-id="bckWBFBTCYVjmNtTgUj9JE">
+<meta name="theme-color" content="#eef3f0" data-page-node-id="J9qiBk8np34GzjMl6WeaG6">
+<meta name="apple-mobile-web-app-capable" content="yes" data-page-node-id="x3LPtBAMqNsWjoEvoPo3zK">
+<title data-page-node-id="snbZQErQwvVkrGtGK00tjM">奶蛙小游戏</title>
+<style data-page-node-id="TH9cP3ey4Bi2WdUb3yCCvC">
+  :root {
+    --ink: #14342a;
+    --ink2: #5b6f66;
+    --ink3: #8b9d94;
+    --line: rgba(31, 74, 58, .10);
+    --card: rgba(255, 255, 255, .86);
+    --shadow: 0 1px 2px rgba(24, 61, 48, .05), 0 10px 28px -14px rgba(24, 61, 48, .22);
+    --shadow-hi: 0 2px 6px rgba(24, 61, 48, .07), 0 24px 46px -18px rgba(24, 61, 48, .32);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
+    background: radial-gradient(120% 80% at 50% 0%, #f9fcfa 0%, #e7efe9 100%);
+    background-attachment: fixed;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* 背景装饰光斑 */
+  .bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .bg span {
+    position: absolute; border-radius: 50%;
+    filter: blur(70px);
+    opacity: .5;
+  }
+  .bg .b1 { width: 320px; height: 320px; left: -90px; top: -80px; background: rgba(6, 182, 212, .22); }
+  .bg .b2 { width: 300px; height: 300px; right: -100px; top: 12%;  background: rgba(34, 197, 94, .18); }
+  .bg .b3 { width: 300px; height: 300px; left: 30%; bottom: -140px; background: rgba(244, 63, 94, .14); }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: calc(28px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  /* ---------- 头部 ---------- */
+  .hero { text-align: center; padding: 6px 0 24px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 700; letter-spacing: .2px;
+    color: #2f6d55;
+    background: rgba(255, 255, 255, .82);
+    border: 1px solid var(--line);
+    padding: 6px 13px;
+    border-radius: 999px;
+    box-shadow: 0 1px 2px rgba(24, 61, 48, .04);
+  }
+  .chip i {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #34c77b;
+    box-shadow: 0 0 0 3px rgba(52, 199, 123, .18);
+  }
+
+  h1 {
+    margin: 16px 0 8px;
+    font-size: clamp(27px, 8vw, 35px);
+    font-weight: 900;
+    letter-spacing: .5px;
+    color: var(--ink);
+  }
+
+  .sub { margin: 0; font-size: 14px; color: var(--ink2); letter-spacing: .2px; }
+
+  /* ---------- 卡片列表 ---------- */
+  .grid { display: grid; grid-template-columns: 1fr; gap: 13px; }
+
+  .card {
+    --c1: #10b981;
+    --csoft: rgba(16, 185, 129, .13);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 16px;
+    border-radius: 22px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    transition: transform .3s cubic-bezier(.22, 1, .36, 1),
+                box-shadow .3s ease,
+                border-color .3s ease;
+    animation: rise .55s cubic-bezier(.22, 1, .36, 1) both;
+  }
+  .card:nth-child(1) { animation-delay: .05s; }
+  .card:nth-child(2) { animation-delay: .12s; }
+  .card:nth-child(3) { animation-delay: .19s; }
+
+  .card::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(120% 100% at 0% 50%, var(--csoft), transparent 62%);
+    opacity: 0;
+    transition: opacity .3s ease;
+    pointer-events: none;
+  }
+
+  .card:hover, .card:focus-visible {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hi);
+    border-color: var(--c1);
+    outline: none;
+  }
+  .card:hover::after, .card:focus-visible::after { opacity: .85; }
+  .card:active { transform: translateY(-1px) scale(.988); }
+
+  /* 图标 */
+  .ico {
+    position: relative;
+    flex: none;
+    width: 64px; height: 64px;
+    border-radius: 19px;
+    background: var(--csoft);
+    display: grid; place-items: center;
+    transition: transform .3s cubic-bezier(.22, 1, .36, 1);
+  }
+  .card:hover .ico { transform: scale(1.06) rotate(-2deg); }
+  .ico svg { width: 52px; height: 52px; display: block; }
+
+  /* 文字 */
+  .meta { flex: 1; min-width: 0; }
+  .name {
+    font-size: 17px; font-weight: 800; letter-spacing: .3px;
+    color: var(--ink);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .desc {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink2);
+  }
+  .tags { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    font-size: 11px; font-weight: 700;
+    color: var(--c1);
+    background: var(--csoft);
+    padding: 3px 9px;
+    border-radius: 999px;
+    letter-spacing: .2px;
+  }
+
+  /* 进入箭头 */
+  .go {
+    flex: none;
+    width: 34px; height: 34px;
+    margin-left: auto;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--csoft);
+    color: var(--c1);
+    transition: transform .3s cubic-bezier(.22, 1, .36, 1);
+  }
+  .go svg { width: 17px; height: 17px; }
+  .card:hover .go { transform: translateX(3px); }
+
+  /* ---------- 底部 ---------- */
+  .foot {
+    margin-top: 22px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink3);
+    letter-spacing: .2px;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* ---------- 宽屏：三张卡片并排 ---------- */
+  @media (min-width: 720px) {
+    .app { padding-top: calc(48px + env(safe-area-inset-top)); }
+    .hero { padding-bottom: 32px; }
+    .grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 15px;
+      padding: 26px 18px 22px;
+    }
+    .ico { width: 86px; height: 86px; border-radius: 25px; }
+    .ico svg { width: 68px; height: 68px; }
+    .name { justify-content: center; font-size: 18px; }
+    .desc { font-size: 13.5px; }
+    .tags { justify-content: center; }
+    .go { margin-left: 0; width: 38px; height: 38px; }
+    .card:hover .go { transform: translateY(3px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+<style id="__dm_no_drag_style__" data-page-node-id="xncZgPnnKqy707mZZ1fC7d">* { -webkit-user-drag: none !important; }</style><style id="__dm_bindable_badge_style__" data-page-node-id="rYqw2uCPFIAATByLjbBnjB">[data-sp-bindable="database"]{outline:1px dashed #0088ff;outline-offset:2px;border-radius:4px;}[data-sp-bindable="database"] *{pointer-events:none !important;transition:none !important;animation:none !important;}[data-sp-bindable="database"]{transition:none !important;animation:none !important;}</style></head>
+<body data-page-node-id="Cr7Xju5zXVtTOotnB6HLKG" style="">
+
+<div class="bg" aria-hidden="true" data-page-node-id="RNLjZJeC7nDIzSUxFXSYnM">
+  <span class="b1" data-page-node-id="LIvFEdz6YhjZiS9sDkuaeC"></span><span class="b2" data-page-node-id="DnYZGxERp9Mj5tvG0KB0B4"></span><span class="b3" data-page-node-id="r28ZpBHZ49op5mrAK2Zeb1"></span>
+</div>
+
+<main class="app" data-page-node-id="y6KtKfs9uVHNrVdXcplf09">
+
+  <header class="hero" data-page-node-id="QCLjbALIuFcngOzisgEss6">
+    
+    <h1 data-page-node-id="NpPmfub6eFA8Gx9Fh1Ki1C" style="">奶蛙小游戏​</h1>
+    <p class="sub" data-page-node-id="nBfvIJGtbQu6IpqQNsXsAu">挑一个开始，随时点左上角返回。</p>
+  </header>
+
+  <section class="grid" data-page-node-id="BCU26MpQTfAemflzd6gpJz">
+
+    <!-- 连连看 -->
+    <a class="card" href="lianliankan/index.html" style="--c1:#06b6d4; --csoft:rgba(6,182,212,.13);" data-page-node-id="gIFqRBvSovisOeDFhRMia5">
+      <div class="ico" data-page-node-id="oIimBCFM9GxjayDnzB2DxD">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-page-node-id="J6YwPm7SIEqKzZUHVM3M0v">
+          <path d="M31 31 V12 H89 V31" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".8" data-page-node-id="hqx7H2t9QAH2otJH6P4Phv"></path>
+          <rect x="18" y="18" width="26" height="26" rx="8" fill="#06b6d4" data-page-node-id="tC13lMX6zp9ZnMgjfxFcv2"></rect>
+          <rect x="47" y="18" width="26" height="26" rx="8" fill="#fff" stroke="#06b6d4" stroke-opacity=".28" data-page-node-id="xDFuZ7XblkxSPdgCGVIlBK"></rect>
+          <rect x="76" y="18" width="26" height="26" rx="8" fill="#06b6d4" data-page-node-id="urm0qi1YMxm0oBcwwF43Sc"></rect>
+          <rect x="18" y="47" width="26" height="26" rx="8" fill="#fff" stroke="#06b6d4" stroke-opacity=".28" data-page-node-id="Kh4ksBK02DTj9SqXeSOFCa"></rect>
+          <rect x="47" y="47" width="26" height="26" rx="8" fill="#fff" stroke="#06b6d4" stroke-opacity=".28" data-page-node-id="4LmeGksj7AesjcwYVF4pa0"></rect>
+          <rect x="76" y="47" width="26" height="26" rx="8" fill="#fff" stroke="#06b6d4" stroke-opacity=".28" data-page-node-id="l4oNyj3lQZOubLaP21E3fQ"></rect>
+          <rect x="18" y="76" width="26" height="26" rx="8" fill="#fff" stroke="#06b6d4" stroke-opacity=".28" data-page-node-id="dtxHkqD1mu6mUUodjt2tyb"></rect>
+          <rect x="47" y="76" width="26" height="26" rx="8" fill="#fff" stroke="#06b6d4" stroke-opacity=".28" data-page-node-id="TZew2uTUMHE2wRokOLnXTN"></rect>
+          <rect x="76" y="76" width="26" height="26" rx="8" fill="#fff" stroke="#06b6d4" stroke-opacity=".28" data-page-node-id="RTxvKLFFfcpcLLzyFPVlyi"></rect>
+          <circle cx="60" cy="31" r="4.6" fill="#06b6d4" opacity=".45" data-page-node-id="fGyfMTNC1Osac5RmokMZZ0"></circle>
+          <circle cx="31" cy="60" r="4.6" fill="#06b6d4" opacity=".45" data-page-node-id="i46O79ExXTPRzc6ZC5I2wx"></circle>
+          <circle cx="60" cy="60" r="4.6" fill="#06b6d4" opacity=".45" data-page-node-id="zdYGX1gg9eXLgvlbioXy0R"></circle>
+          <circle cx="89" cy="60" r="4.6" fill="#06b6d4" opacity=".45" data-page-node-id="88qnFqvGutCkOlMylB5MFt"></circle>
+          <circle cx="31" cy="89" r="4.6" fill="#06b6d4" opacity=".45" data-page-node-id="c6yYIiqUyV4uvJee9AJqhh"></circle>
+          <circle cx="60" cy="89" r="4.6" fill="#06b6d4" opacity=".45" data-page-node-id="SCow8gKnJUFmFhxqgrvF1i"></circle>
+          <circle cx="89" cy="89" r="4.6" fill="#06b6d4" opacity=".45" data-page-node-id="FHCNGqgJjGVDObVg9ADZMC"></circle>
+          <circle cx="31" cy="31" r="5" fill="#fff" data-page-node-id="WUlKQRCqriZUPY8aZNWEL3"></circle>
+          <circle cx="89" cy="31" r="5" fill="#fff" data-page-node-id="HuY4ccBWLWXz1A3yGOQLbG"></circle>
+        </svg>
+      </div>
+      <div class="meta" data-page-node-id="ulNliEbcBhMAV68SrKwRDy">
+        <div class="name" data-page-node-id="8N7LWrtgSNv4hnwwwGvzL6" style="">奶蛙连连看​</div>
+        <div class="desc" data-page-node-id="YtR2FPEbGioqOSZKSRW4GW" style="">找出相同的奶蛙，用不超过两个转弯的线把它们连起来。​</div>
+        <div class="tags" data-page-node-id="xReVyQ3jZ04P4Y8VwALiLX"><span class="tag" data-page-node-id="gHDuAr2Eu8bBdzBv1SKDra">休闲</span><span class="tag" data-page-node-id="HdBZDINMr9zeZ4O1x9CV21">观察力</span></div>
+      </div>
+      <div class="go" aria-hidden="true" data-page-node-id="n0u5ECRBkBlPQBDjMD36Tz">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="4cAGqBCG3AsLl8eDXCu0W8"><path d="M9 5l7 7-7 7" data-page-node-id="gq9ekF18YjDouUTDsakL5U"></path></svg>
+      </div>
+    </a>
+
+    <!-- 贪吃蛇 -->
+    <a class="card" href="snake/index.html" style="--c1:#22c55e; --csoft:rgba(34,197,94,.14);" data-page-node-id="rJZpgX0qDDJ9xgAj5CUd7a">
+      <div class="ico" data-page-node-id="g1OC5W152iLk70roAfBGwB">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-page-node-id="cROOHA8cdJrlB7sAu7S4Br">
+          <circle cx="30" cy="32" r="10" fill="#f43f5e" data-page-node-id="lCBeqUWcNYAslGarE1fDdX"></circle>
+          <ellipse cx="26.5" cy="29" rx="3" ry="2" fill="#fff" opacity=".55" transform="rotate(-32 26.5 29)" data-page-node-id="gCk6PuLvPb55jzRJrHC8jz"></ellipse>
+          <path d="M31 23.5c0-4 2.4-6 5-7" stroke="#3f9d52" stroke-width="3.2" stroke-linecap="round" data-page-node-id="CbL8nJtbvREB7WmhKvCndU"></path>
+          <path d="M18 96 H52 V46 H90" stroke="#22c55e" stroke-width="19" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="mDx9lf3pdwql7Sb3NhzA1H"></path>
+          <circle cx="30" cy="96" r="3" fill="#fff" opacity=".38" data-page-node-id="nqXLrarnxL4vmmAAOdugqI"></circle>
+          <circle cx="40" cy="96" r="3" fill="#fff" opacity=".38" data-page-node-id="i3ODsgO0Mc4PBMU5twWDFW"></circle>
+          <circle cx="52" cy="70" r="3" fill="#fff" opacity=".38" data-page-node-id="axPFcG7Xpqlrx7jvp0FVgS"></circle>
+          <circle cx="52" cy="82" r="3" fill="#fff" opacity=".38" data-page-node-id="2QAgAXYql4DKVEhGhe0b7G"></circle>
+          <circle cx="64" cy="46" r="3" fill="#fff" opacity=".38" data-page-node-id="U8e9xRDC5kDwHpWw7ttCKO"></circle>
+          <circle cx="75" cy="46" r="3" fill="#fff" opacity=".38" data-page-node-id="g5D8EGDyDr03oqfKgiOzKw"></circle>
+          <circle cx="90" cy="46" r="13" fill="#22c55e" data-page-node-id="kbNPTHQiOsKrYux6AI00cm"></circle>
+          <circle cx="95" cy="41.5" r="2.9" fill="#14342a" data-page-node-id="9e2fJdoz2gUf1wotXcBAi8"></circle>
+          <circle cx="95" cy="50.5" r="2.9" fill="#14342a" data-page-node-id="xRCNxgzF7ZxEtozXUJFMXF"></circle>
+        </svg>
+      </div>
+      <div class="meta" data-page-node-id="Sm70OBb97FOWzghcCGBBBv">
+        <div class="name" data-page-node-id="py63YPRNtjhmdcAGewFepo" style="">贪吃蛙</div>
+        <div class="desc" data-page-node-id="LnKUqmftQEQrlWCvE4p3aj" style="white-space: pre-wrap;">控制奶蛋吃掉奶鼠不断变长，小心别撞墙、别咬到自己。​​</div>
+        <div class="tags" data-page-node-id="eBU7NBcPjr4b9PfhW2j17w"><span class="tag" data-page-node-id="ddBGrcCx4ONSmsBx36df6J">经典</span><span class="tag" data-page-node-id="UgIZhACCIpS8jjbQ89fQeG">反应力</span></div>
+      </div>
+      <div class="go" aria-hidden="true" data-page-node-id="ey6I9XAqaXZVSrFJ7E49aG">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="h00rt2pBb8NPH6pwM93RGh"><path d="M9 5l7 7-7 7" data-page-node-id="hwTwTqcFD41TCQwjX8y2ds"></path></svg>
+      </div>
+    </a>
+
+    <!-- 合成大西瓜 -->
+    <a class="card" href="suika/index.html" style="--c1:#f43f5e; --csoft:rgba(244,63,94,.13);" data-page-node-id="L7Wnh6cOBRVTkj6TISnPWA">
+      <div class="ico" data-page-node-id="91k76TuuPNyeqb90EHmtpm">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-page-node-id="7MW5Skbvdx8d1y6piSVv2f">
+          <defs data-page-node-id="tMRdY0cvLhMBI7CCwBDf71">
+            <linearGradient id="suiGrad" x1="0.2" y1="0" x2="0.6" y2="1" data-page-node-id="QdyCVDl0FX4zrp1REKWgaP">
+              <stop offset="0" stop-color="#7fd08a" data-page-node-id="P3Claxs4Z4LoIs5Vu2DT14"></stop>
+              <stop offset="1" stop-color="#2f9e4f" data-page-node-id="DtSlMmxEXaxy9HIHYjNKdQ"></stop>
+            </linearGradient>
+          </defs>
+          <circle cx="34" cy="26" r="9" fill="#fbbf24" data-page-node-id="wJKYtMqZgE98s4qxgWA826"></circle>
+          <ellipse cx="31" cy="23" rx="2.6" ry="1.8" fill="#fff" opacity=".5" transform="rotate(-30 31 23)" data-page-node-id="EsHQyM9RMlTkI4xSMErELq"></ellipse>
+          <circle cx="58" cy="20" r="7" fill="#a78bfa" data-page-node-id="DQi4GF9rbvYe3k3ylEoXBN"></circle>
+          <ellipse cx="55.8" cy="17.6" rx="2" ry="1.4" fill="#fff" opacity=".5" transform="rotate(-30 55.8 17.6)" data-page-node-id="l3eAOA4hfO2oHHe8SIu8yr"></ellipse>
+          <circle cx="82" cy="28" r="8" fill="#fb7185" data-page-node-id="PSEBQdfHFGbLHariCsS0ox"></circle>
+          <ellipse cx="79.5" cy="25.4" rx="2.3" ry="1.6" fill="#fff" opacity=".5" transform="rotate(-30 79.5 25.4)" data-page-node-id="SQ2u62yrMTb6EcIKiUHrNd"></ellipse>
+          <circle cx="60" cy="76" r="31" fill="url(#suiGrad)" data-page-node-id="pnBL13mYNJEJcP8zPPMlVv"></circle>
+          <path d="M60 45 C55 66, 55 88, 60 107" stroke="#2e7d32" stroke-width="4.5" stroke-linecap="round" opacity=".55" data-page-node-id="hFgo44iVDPUT9PuFOAQMVG"></path>
+          <path d="M45 52 C38 70, 40 90, 50 103" stroke="#2e7d32" stroke-width="4.5" stroke-linecap="round" opacity=".55" data-page-node-id="jyPVv2nk7YdvJpxQnX1O7D"></path>
+          <path d="M75 52 C82 70, 80 90, 70 103" stroke="#2e7d32" stroke-width="4.5" stroke-linecap="round" opacity=".55" data-page-node-id="oEcp5Ivuw2FFn6okw7Ky1r"></path>
+          <path d="M41 62 Q45 50 60 47" stroke="#fff" stroke-opacity=".34" stroke-width="6" stroke-linecap="round" data-page-node-id="Js6QU6CR4dYNdFUYZrjFl3"></path>
+        </svg>
+      </div>
+      <div class="meta" data-page-node-id="HrF8ffdBmjOsfO6Ny18g07">
+        <div class="name" data-page-node-id="DcifCG5jsywH5PtKOq8cfF" style="">合成大奶蛙​</div>
+        <div class="desc" data-page-node-id="PpaYkLZvqu2nivPpnD25dR" style="">掉落奶蛙，两个相同的碰到一起就会合成更大的奶蛙。​</div>
+        <div class="tags" data-page-node-id="0vED9SCl8Ldkt3c3PXjUFM"><span class="tag" data-page-node-id="qWsRgthptGBrO74aM6Gixk">解压</span><span class="tag" data-page-node-id="ikw8cWsoBAButEjjr4wNzl">策略</span></div>
+      </div>
+      <div class="go" aria-hidden="true" data-page-node-id="yPAeqi8uubQZaHTai8xWXn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="E2ux8fi6GZBvGFiSKXKafH"><path d="M9 5l7 7-7 7" data-page-node-id="h7deQuttWaxMxkmCOYDzUF"></path></svg>
+      </div>
+    </a>
+
+  </section>
+
+  
+
+</main>
+
+
+
+
+</body></html>

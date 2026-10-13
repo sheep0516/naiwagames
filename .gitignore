@@ -1,0 +1,11 @@
+# WorkBuddy 项目数据（仅本地）
+.workbuddy/
+
+# 开发期临时 / 验证脚本
+.check.js
+.t.js
+
+# 系统垃圾文件
+Thumbs.db
+Desktop.ini
+.DS_Store

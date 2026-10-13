@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#eef3f0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>奶蛙连连看</title>
+<style>
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: #1c2b23;
+    background: radial-gradient(120% 80% at 50% 0%, #f7fbf8 0%, #e7efe9 100%);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 520px;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0 auto;
+    padding: calc(6px + env(safe-area-inset-top)) 12px calc(8px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ---------- 顶部菜单栏 ---------- */
+  .topbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+  }
+
+  .topbar .right {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid #dde8e1;
+    border-radius: 13px;
+    background: #ffffff;
+    color: #2f4a3c;
+    box-shadow: 0 2px 6px rgba(31, 74, 55, 0.06);
+    transition: transform .08s ease, background .15s ease;
+    cursor: pointer;
+  }
+  .icon-btn:active { transform: scale(0.92); background: #f1f6f3; }
+  .icon-btn > span { display: flex; align-items: center; justify-content: center; }
+  .icon-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor;
+                  stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn .fill-icon { fill: currentColor; stroke: none; }
+
+  .timer {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    font-variant-numeric: tabular-nums;
+    color: #24463a;
+    padding: 4px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .72);
+  }
+
+  /* ---------- 数据区 ---------- */
+  .scores {
+    flex: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .score-card {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+  }
+  .score-card.mid { justify-content: center; }
+  .score-card.end { justify-content: flex-end; }
+  .score-card .label {
+    font-size: 12.5px;
+    color: #7b9187;
+    white-space: nowrap;
+  }
+  .score-card .value {
+    font-size: 20px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #1a9c63;
+    line-height: 1.05;
+  }
+  .score-card .value.best { color: #ef7a35; }
+  .score-card .value.left { color: #4a97e0; }
+
+  /* ---------- 游戏窗口 ---------- */
+  .board-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #game {
+    display: block;
+    border-radius: 18px;
+    background: #e9efeb;
+    box-shadow: 0 8px 24px rgba(28, 70, 52, .10), 0 0 0 1px rgba(28, 70, 52, .06);
+    touch-action: none;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .18s ease;
+  }
+  .overlay.show { opacity: 1; }
+  .overlay.show .card { pointer-events: auto; }
+  .overlay .card {
+    max-width: 86%;
+    padding: 20px 26px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 10px 30px rgba(24, 60, 44, .16);
+    text-align: center;
+  }
+  .overlay .c-title { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+  .overlay .c-desc { font-size: 13.5px; line-height: 1.7; color: #6c8378; }
+  .overlay .c-desc b { color: #1a9c63; font-size: 16px; }
+  .overlay .c-desc .orange { color: #ef7a35; }
+  .overlay .badge {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #ffa63d, #f2691f);
+  }
+  .overlay .c-btn {
+    margin-top: 14px;
+    padding: 10px 26px;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #26b878, #149b60);
+    box-shadow: 0 6px 16px rgba(26, 156, 99, .28);
+    cursor: pointer;
+    transition: transform .08s ease;
+  }
+  .overlay .c-btn:active { transform: scale(0.95); }
+
+  /* ---------- 底部工具栏 ---------- */
+  .tools {
+    --th: clamp(48px, 8.6vh, 62px);
+    flex: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: min(100%, 380px);
+    margin: 2px auto 0;
+  }
+  .tools button {
+    height: var(--th);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 10px;
+    border: 1px solid #dbe6df;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff, #f3f8f5);
+    color: #2c6a4f;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 3px 8px rgba(31, 74, 55, .07);
+    transition: transform .07s ease, background .12s ease;
+    cursor: pointer;
+    touch-action: none;
+  }
+  .tools button:active {
+    transform: scale(0.94);
+    background: linear-gradient(180deg, #e9f5ee, #dcf0e5);
+  }
+  .tools button svg {
+    width: 20px; height: 20px;
+    fill: none; stroke: currentColor;
+    stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  /* ---------- 提示 ---------- */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    transform: translate(-50%, 12px);
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    color: #fff;
+    background: rgba(30, 48, 40, .88);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease;
+    z-index: 99;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (orientation: landscape) and (max-height: 520px) {
+    .app { max-width: 100%; }
+    .tools { --th: 44px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 菜单栏 -->
+  <header class="topbar">
+    <div class="left">
+      <button class="icon-btn" id="btnBack" aria-label="返回">
+        <svg viewBox="0 0 24 24"><path d="M15 4.5 7.5 12 15 19.5"/></svg>
+      </button>
+    </div>
+    <div class="timer" id="timer">00:00</div>
+    <div class="right">
+      <button class="icon-btn" id="btnPause" aria-label="暂停">
+        <span id="pauseIcon">
+          <svg viewBox="0 0 24 24">
+            <rect class="fill-icon" x="6.5" y="5" width="3.6" height="14" rx="1.4"/>
+            <rect class="fill-icon" x="13.9" y="5" width="3.6" height="14" rx="1.4"/>
+          </svg>
+        </span>
+      </button>
+      <button class="icon-btn" id="btnReset" aria-label="重置">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 12a8 8 0 1 1-2.6-5.9"/>
+          <path d="M20 4.5V10h-5.2"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 数据 -->
+  <div class="scores">
+    <div class="score-card">
+      <span class="label">剩余</span>
+      <span class="value left" id="remain">32</span>
+    </div>
+    <div class="score-card mid">
+      <span class="label">得分</span>
+      <span class="value" id="score">0</span>
+    </div>
+    <div class="score-card end">
+      <span class="label">最高</span>
+      <span class="value best" id="best">0</span>
+    </div>
+  </div>
+
+  <!-- 游戏窗口 -->
+  <div class="board-wrap" id="boardWrap">
+    <canvas id="game"></canvas>
+    <div class="overlay" id="overlay">
+      <div class="card" id="overlayCard"></div>
+    </div>
+  </div>
+
+  <!-- 工具栏 -->
+  <div class="tools">
+    <button id="btnHint" aria-label="提示">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3a6 6 0 0 0-3.6 10.8c.5.4.8 1 .8 1.7v.6h5.6v-.6c0-.7.3-1.3.8-1.7A6 6 0 0 0 12 3z"/>
+        <path d="M10 19.2h4M10.7 21.5h2.6"/>
+      </svg>
+      <span>提示</span>
+    </button>
+    <button id="btnShuffle" aria-label="重排">
+      <svg viewBox="0 0 24 24">
+        <path d="M4 8h13"/>
+        <path d="M14 5l3 3-3 3"/>
+        <path d="M20 16H7"/>
+        <path d="M10 13l-3 3 3 3"/>
+      </svg>
+      <span>重排</span>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ========== 元素 ========== */
+  const canvas    = document.getElementById('game');
+  const ctx       = canvas.getContext('2d');
+  const boardWrap = document.getElementById('boardWrap');
+  const overlay   = document.getElementById('overlay');
+  const card      = document.getElementById('overlayCard');
+  const scoreEl   = document.getElementById('score');
+  const bestEl    = document.getElementById('best');
+  const remainEl  = document.getElementById('remain');
+  const timerEl   = document.getElementById('timer');
+  const btnBack   = document.getElementById('btnBack');
+  const btnPause  = document.getElementById('btnPause');
+  const btnReset  = document.getElementById('btnReset');
+  const btnHint   = document.getElementById('btnHint');
+  const btnShuffle= document.getElementById('btnShuffle');
+  const pauseIcon = document.getElementById('pauseIcon');
+  const toastEl   = document.getElementById('toast');
+
+  /* ========== 常量 ========== */
+  const COLS      = 8;                  // 内部 8 x 8 方块
+  const ROWS      = 8;
+  const GX        = COLS + 2;           // 逻辑格 10 x 10，外圈空着用于绕行
+  const GY        = ROWS + 2;
+  const MATCH     = 10;                 // 每消一对得分
+  const HINT_COST = 2;
+  const STORE_KEY = 'link_best_score_v1';
+
+  /* ===== 自定义图片配置（想换自己的图，改这一段就够了）===== */
+  const USE_IMAGES = true;               // false = 全部用内置矢量图标
+  const IMG_DIR    = 'img/';             // 图片目录（相对 index.html）
+  const IMG_EXTS   = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
+  const IMG_FIT    = 'cover';            // 'cover' 裁切填满 / 'contain' 完整显示
+  const IMG_CARD   = true;               // true = 图片外面保留淡色圆角底板
+  const TYPE_COUNT = 8;                  // 方块种类数（2~16），有几张图就填几
+
+  // 每种方块的名 / 配色。前 8 个有内置矢量图标；没有图片时用它兜底
+  const TYPES = [
+    { key: 'apple',  color: '#ef4b52', light: '#ffe3e4' },
+    { key: 'star',   color: '#f0a01f', light: '#fff0cf' },
+    { key: 'heart',  color: '#f2698f', light: '#ffe2ec' },
+    { key: 'drop',   color: '#4a97e0', light: '#ddecfb' },
+    { key: 'leaf',   color: '#2fa96c', light: '#daf2e5' },
+    { key: 'flower', color: '#8a7ce0', light: '#e7e3fc' },
+    { key: 'gem',    color: '#22a5a5', light: '#d6f1f1' },
+    { key: 'sun',    color: '#e2703a', light: '#ffe7d7' },
+    { key: 'k9',     color: '#c94f9e', light: '#fbe0f0' },
+    { key: 'k10',    color: '#5a7fd6', light: '#e0e8fb' },
+    { key: 'k11',    color: '#7a9a2e', light: '#eef5d8' },
+    { key: 'k12',    color: '#b06ad0', light: '#f2e2fa' },
+    { key: 'k13',    color: '#3b9bd0', light: '#dceefb' },
+    { key: 'k14',    color: '#d4692e', light: '#fbe4d7' },
+    { key: 'k15',    color: '#1f9d8a', light: '#d6f2ec' },
+    { key: 'k16',    color: '#a08330', light: '#f7eecd' }
+  ].slice(0, Math.min(TYPE_COUNT, 16));
+
+  /* ========== 状态 ========== */
+  let grid      = [];          // grid[y][x] = 0 空 / 1..8 类型
+  let state     = 'ready';     // ready | running | paused | over
+  let sel       = null;        // {x,y}
+  let score     = 0;
+  let best      = Number(localStorage.getItem(STORE_KEY) || 0);
+  let elapsed   = 0;
+  let lastTick  = 0;
+  let sizeCss   = 300;
+  let cell      = 30;
+  let dpr       = 1;
+  let bornAt    = 0;
+  let hint      = null;        // {a,b,until}
+  let bad       = null;        // {a,b,t0}
+  let fx        = null;        // {a,b,pts,t0,hidden}
+  let locked    = false;
+  let newRecord = false;
+  let winBonus  = 0;
+  let overAt    = 0;
+
+  bestEl.textContent = best;
+
+  /* ========== 尺寸自适应 ========== */
+  function resize() {
+    const rect = boardWrap.getBoundingClientRect();
+    const avail = Math.min(rect.width, rect.height);
+    const size = Math.max(160, Math.floor(avail) - 2);
+    sizeCss = size;
+    cell = size / GX;
+    dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    canvas.style.width  = size + 'px';
+    canvas.style.height = size + 'px';
+    canvas.width  = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
+    render(performance.now());
+  }
+
+  if (window.ResizeObserver) {
+    new ResizeObserver(resize).observe(boardWrap);
+  } else {
+    window.addEventListener('resize', resize);
+  }
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 250); });
+
+  /* ========== 自定义图片加载 ========== */
+  const customImg = [];          // customImg[类型下标] = 已加载成功的 <img>，没有就是 undefined
+
+  // 查找顺序：名字（apple.png…）→ 编号（1.png…），先找到哪个用哪个
+  function imageCandidates(i) {
+    const t = TYPES[i] || {};
+    const names = [];
+    if (t.key && !/^k\d+$/.test(t.key)) names.push(t.key);
+    names.push(String(i + 1));
+    const out = [], seen = {};
+    names.forEach(function (n) {
+      IMG_EXTS.forEach(function (ext) {
+        const p = IMG_DIR + n + '.' + ext;
+        if (!seen[p]) { seen[p] = 1; out.push(p); }
+      });
+    });
+    return out;
+  }
+
+  function tryLoad(list, k, i) {
+    if (k >= list.length) return;
+    const el = new Image();
+    el.onload = function () { customImg[i] = el; };
+    el.onerror = function () { tryLoad(list, k + 1, i); };
+    el.src = list[k];
+  }
+
+  function loadCustomImages() {
+    if (!USE_IMAGES) return;
+    for (let i = 0; i < TYPES.length; i++) tryLoad(imageCandidates(i), 0, i);
+  }
+
+  // 把图片按 IMG_FIT 规则填进 w×h 的方框（以 0,0 为中心）
+  function drawImageFit(el, w, h) {
+    const iw = el.naturalWidth || 0, ih = el.naturalHeight || 0;
+    if (!iw || !ih) { ctx.drawImage(el, -w / 2, -h / 2, w, h); return; }
+    const k = IMG_FIT === 'contain' ? Math.min(w / iw, h / ih) : Math.max(w / iw, h / ih);
+    const dw = iw * k, dh = ih * k;
+    ctx.drawImage(el, -dw / 2, -dh / 2, dw, dh);
+  }
+
+  /* ========== 小工具 ========== */
+  function fmt(ms) {
+    const total = Math.floor(ms / 1000);
+    const m = String(Math.floor(total / 60)).padStart(2, '0');
+    const s = String(total % 60).padStart(2, '0');
+    return m + ':' + s;
+  }
+  function rgba(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  function rrect(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function shuffleArr(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  /* ========== 连通判定 ========== */
+  function isFree(x, y) {
+    if (x < 0 || y < 0 || x >= GX || y >= GY) return false;
+    return grid[y][x] === 0;
+  }
+  function hClear(x1, x2, y) {
+    const a = Math.min(x1, x2), b = Math.max(x1, x2);
+    for (let x = a + 1; x < b; x++) if (!isFree(x, y)) return false;
+    return true;
+  }
+  function vClear(x, y1, y2) {
+    const a = Math.min(y1, y2), b = Math.max(y1, y2);
+    for (let y = a + 1; y < b; y++) if (!isFree(x, y)) return false;
+    return true;
+  }
+  function oneTurn(a, b) {
+    // 拐点 1：先竖着走 a → c1，再横着走 c1 → b
+    const c1 = { x: a.x, y: b.y };
+    if (isFree(c1.x, c1.y) && vClear(a.x, a.y, c1.y) && hClear(c1.x, b.x, b.y)) return [a, c1, b];
+    // 拐点 2：先横着走 a → c2，再竖着走 c2 → b
+    const c2 = { x: b.x, y: a.y };
+    if (isFree(c2.x, c2.y) && hClear(a.x, c2.x, a.y) && vClear(c2.x, c2.y, b.y)) return [a, c2, b];
+    return null;
+  }
+  // 返回路径点数组（含起终点），不可连返回 null
+  function canConnect(a, b) {
+    if (a.y === b.y && hClear(a.x, b.x, a.y)) return [a, b];
+    if (a.x === b.x && vClear(a.x, a.y, b.y)) return [a, b];
+
+    const r1 = oneTurn(a, b);
+    if (r1) return r1;
+
+    for (let x = 0; x < GX; x++) {
+      if (x === a.x || !isFree(x, a.y)) continue;
+      if (!hClear(a.x, x, a.y)) continue;
+      const r = oneTurn({ x: x, y: a.y }, b);
+      if (r) return [a].concat(r);
+    }
+    for (let y = 0; y < GY; y++) {
+      if (y === a.y || !isFree(a.x, y)) continue;
+      if (!vClear(a.x, a.y, y)) continue;
+      const r = oneTurn({ x: a.x, y: y }, b);
+      if (r) return [a].concat(r);
+    }
+    return null;
+  }
+
+  /* ========== 棋盘 ========== */
+  function eachTile(cb) {
+    for (let y = 1; y <= ROWS; y++) {
+      for (let x = 1; x <= COLS; x++) {
+        if (grid[y][x]) cb(x, y, grid[y][x]);
+      }
+    }
+  }
+  function tilesLeft() {
+    let n = 0;
+    eachTile(function () { n++; });
+    return n;
+  }
+  function findPair() {
+    const list = [];
+    eachTile(function (x, y, v) { list.push({ x: x, y: y, v: v }); });
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        if (list[i].v !== list[j].v) continue;
+        if (canConnect(list[i], list[j])) return [list[i], list[j]];
+      }
+    }
+    return null;
+  }
+  function fill(pool) {
+    grid = [];
+    for (let y = 0; y < GY; y++) {
+      grid.push(new Array(GX).fill(0));
+    }
+    let k = 0;
+    for (let y = 1; y <= ROWS; y++) {
+      for (let x = 1; x <= COLS; x++) grid[y][x] = pool[k++];
+    }
+  }
+  function buildBoard() {
+    // 按「对」发牌：每种方块成对出现，任何种类数都保证能两两消完
+    const pairs = (COLS * ROWS) / 2;
+    const pool = [];
+    for (let i = 0; i < pairs; i++) {
+      const t = (i % TYPES.length) + 1;
+      pool.push(t, t);
+    }
+    let guard = 0;
+    do {
+      shuffleArr(pool);
+      fill(pool);
+      guard++;
+    } while (!findPair() && guard < 60);
+
+    bornAt = performance.now();
+    sel = null; hint = null; bad = null; fx = null; locked = false;
+    remainEl.textContent = tilesLeft() / 2;
+  }
+  function shuffleRemaining() {
+    const pos = [], vals = [];
+    eachTile(function (x, y, v) { pos.push({ x: x, y: y }); vals.push(v); });
+    if (pos.length < 2) return;
+    let guard = 0;
+    do {
+      shuffleArr(vals);
+      for (let i = 0; i < pos.length; i++) grid[pos[i].y][pos[i].x] = vals[i];
+      guard++;
+    } while (!findPair() && guard < 80);
+    bornAt = performance.now();
+    sel = null;
+  }
+
+  /* ========== 局面流程 ========== */
+  function resetGame() {
+    score = 0;
+    elapsed = 0;
+    winBonus = 0;
+    newRecord = false;
+    overAt = 0;
+    scoreEl.textContent = '0';
+    timerEl.textContent = '00:00';
+    buildBoard();
+    state = 'ready';
+    setPauseIcon(false);
+    showOverlay('ready');
+    render(performance.now());
+  }
+
+  function start() {
+    if (state === 'running') return;
+    if (state === 'over') resetGame();
+    if (state === 'ready' || state === 'paused') {
+      state = 'running';
+      lastTick = performance.now();
+    }
+    hideOverlay();
+    setPauseIcon(true);
+  }
+  function pause() {
+    if (state !== 'running') return;
+    state = 'paused';
+    setPauseIcon(false);
+    showOverlay('paused');
+  }
+  function togglePause() {
+    if (state === 'running') pause();
+    else start();
+  }
+
+  function winGame() {
+    state = 'over';
+    overAt = performance.now();
+    winBonus = Math.min(300, Math.max(0, 300 - Math.floor(elapsed / 1000)));
+    score += winBonus;
+    scoreEl.textContent = score;
+    if (score > best) {
+      best = score;
+      newRecord = true;
+      localStorage.setItem(STORE_KEY, String(best));
+      bestEl.textContent = best;
+    }
+    setPauseIcon(false);
+    showOverlay('win');
+  }
+
+  /* ========== 点击逻辑 ========== */
+  function pick(ev) {
+    const r = canvas.getBoundingClientRect();
+    const px = (ev.clientX - r.left) / r.width * sizeCss;
+    const py = (ev.clientY - r.top) / r.height * sizeCss;
+    const x = Math.floor(px / cell);
+    const y = Math.floor(py / cell);
+    if (x < 1 || x > COLS || y < 1 || y > ROWS) return null;
+    if (!grid[y][x]) return null;
+    return { x: x, y: y };
+  }
+
+  function onTile(p) {
+    const v = grid[p.y][p.x];
+    if (!v) return;
+    hint = null;
+
+    if (sel && sel.x === p.x && sel.y === p.y) { sel = null; return; }
+    if (!sel) { sel = { x: p.x, y: p.y }; return; }
+
+    const a = sel, b = { x: p.x, y: p.y };
+    if (grid[a.y][a.x] !== v) { bad = { a: a, b: b, t0: performance.now() }; sel = b; return; }
+
+    const pts = canConnect(a, b);
+    if (!pts) { bad = { a: a, b: b, t0: performance.now() }; sel = b; return; }
+
+    sel = null;
+    locked = true;
+    fx = { a: a, b: b, pts: pts, t0: performance.now(), hidden: false };
+    score += MATCH;
+    scoreEl.textContent = score;
+  }
+
+  function doHint() {
+    if (state !== 'running' || locked) return;
+    const pair = findPair();
+    if (!pair) { toast('当前没有可消除的组合'); return; }
+    hint = { a: pair[0], b: pair[1], until: performance.now() + 2000 };
+    sel = null;
+    if (score > 0) {
+      score = Math.max(0, score - HINT_COST);
+      scoreEl.textContent = score;
+      toast('已高亮一对（-' + HINT_COST + ' 分）');
+    } else {
+      toast('已高亮一对');
+    }
+  }
+
+  function doShuffle() {
+    if (state === 'ready') { start(); }
+    if (state !== 'running' || locked) return;
+    shuffleRemaining();
+    toast('已重新排列');
+  }
+
+  /* ========== 渲染 ========== */
+  function px(p) { return { x: (p.x + 0.5) * cell, y: (p.y + 0.5) * cell }; }
+
+  function drawGlyph(kind, r, t) {
+    const c = t.color, l = t.light;
+    ctx.fillStyle = c;
+    ctx.strokeStyle = c;
+    ctx.lineCap = 'round';
+
+    if (kind === 'apple') {
+      ctx.beginPath();
+      ctx.arc(-r * 0.2, r * 0.14, r * 0.76, 0, Math.PI * 2);
+      ctx.arc(r * 0.36, r * 0.14, r * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(-r * 0.42, r * 0.0, r * 0.18, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,.6)';
+      ctx.fill();
+      ctx.lineWidth = r * 0.16;
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.06, -r * 0.5);
+      ctx.quadraticCurveTo(r * 0.02, -r * 0.88, r * 0.26, -r * 0.95);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(r * 0.52, -r * 0.8, r * 0.34, r * 0.18, -0.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#3fb56f';
+      ctx.fill();
+
+    } else if (kind === 'star') {
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const rad = (i % 2 ? r * 0.45 : r * 1.06);
+        const a = -Math.PI / 2 + i * Math.PI / 5;
+        const x = Math.cos(a) * rad, y = Math.sin(a) * rad;
+        if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+    } else if (kind === 'heart') {
+      const h = r * 0.98;
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.78);
+      ctx.bezierCurveTo(-h * 1.35, -h * 0.12, -h * 0.62, -h * 1.1, 0, -h * 0.34);
+      ctx.bezierCurveTo(h * 0.62, -h * 1.1, h * 1.35, -h * 0.12, 0, h * 0.78);
+      ctx.closePath();
+      ctx.fill();
+
+    } else if (kind === 'drop') {
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 1.02);
+      ctx.bezierCurveTo(r * 0.6, -r * 0.36, r * 0.8, r * 0.02, r * 0.8, r * 0.2);
+      ctx.arc(0, r * 0.2, r * 0.8, 0, Math.PI, false);
+      ctx.bezierCurveTo(-r * 0.8, r * 0.02, -r * 0.6, -r * 0.36, 0, -r * 1.02);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(-r * 0.3, r * 0.24, r * 0.18, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,.65)';
+      ctx.fill();
+
+    } else if (kind === 'leaf') {
+      ctx.save();
+      ctx.rotate(-0.45);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * 0.94, r * 0.56, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.65)';
+      ctx.lineWidth = r * 0.11;
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.72, 0);
+      ctx.lineTo(r * 0.82, 0);
+      ctx.stroke();
+      ctx.restore();
+
+    } else if (kind === 'flower') {
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, r * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.34, 0, Math.PI * 2);
+      ctx.fillStyle = l;
+      ctx.fill();
+      ctx.lineWidth = r * 0.11;
+      ctx.strokeStyle = c;
+      ctx.stroke();
+
+    } else if (kind === 'gem') {
+      ctx.beginPath();
+      ctx.moveTo(0, r * 1.0);
+      ctx.lineTo(-r * 0.9, -r * 0.16);
+      ctx.lineTo(-r * 0.44, -r * 0.86);
+      ctx.lineTo(r * 0.44, -r * 0.86);
+      ctx.lineTo(r * 0.9, -r * 0.16);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.6)';
+      ctx.lineWidth = r * 0.09;
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.44, -r * 0.86);
+      ctx.lineTo(0, -r * 0.16);
+      ctx.lineTo(r * 0.44, -r * 0.86);
+      ctx.moveTo(-r * 0.9, -r * 0.16);
+      ctx.lineTo(r * 0.9, -r * 0.16);
+      ctx.stroke();
+
+    } else if (kind === 'sun') {
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.56, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = r * 0.16;
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * r * 0.76, Math.sin(a) * r * 0.76);
+        ctx.lineTo(Math.cos(a) * r * 1.04, Math.sin(a) * r * 1.04);
+        ctx.stroke();
+      }
+
+    } else {
+      // 第 9 种及以后没有内置图标：画个圆点占位（这类建议配图片使用）
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.72, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawTile(x, y, v, now) {
+    const t = TYPES[v - 1];
+    const cx = (x + 0.5) * cell, cy = (y + 0.5) * cell;
+    let dx = 0, dy = 0, scale = 1, alpha = 1;
+
+    // 生成动画
+    const delay = ((x * 3 + y * 5) % 8) * 26;
+    const bt = now - bornAt - delay;
+    if (bt < 260) {
+      const k = Math.max(0, Math.min(1, bt / 260));
+      const e = 1 - Math.pow(1 - k, 3);
+      scale *= 0.7 + 0.3 * e;
+      alpha *= k;
+    }
+
+    // 消除动画
+    if (fx && !fx.hidden) {
+      if ((fx.a.x === x && fx.a.y === y) || (fx.b.x === x && fx.b.y === y)) {
+        const k = Math.max(0, Math.min(1, (now - fx.t0) / 190));
+        scale *= 1 - k * 0.8;
+        alpha *= 1 - k;
+      }
+    }
+
+    // 抖动
+    if (bad && ((bad.a.x === x && bad.a.y === y) || (bad.b.x === x && bad.b.y === y))) {
+      const k = now - bad.t0;
+      if (k < 320) dx += Math.sin(k / 26) * cell * 0.09 * (1 - k / 320);
+    }
+
+    const isSel = !!(sel && sel.x === x && sel.y === y);
+    if (isSel) scale *= 1.05;
+
+    const pad = cell * 0.07;
+    const s = cell - pad * 2;
+    const rr = s * 0.29;
+
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.translate(cx + dx, cy + dy);
+    ctx.scale(scale, scale);
+
+    const img = USE_IMAGES ? customImg[v - 1] : null;
+
+    if (img) {
+      // —— 有自定义图片：画图片 ——
+      if (IMG_CARD) {
+        rrect(-s / 2, -s / 2, s, s, rr);
+        ctx.fillStyle = t.light;
+        ctx.fill();
+        ctx.lineWidth = Math.max(1, cell * 0.03);
+        ctx.strokeStyle = rgba(t.color, 0.34);
+        ctx.stroke();
+
+        const inset = s * 0.14;
+        const box = s - inset * 2;
+        ctx.save();
+        rrect(-box / 2, -box / 2, box, box, box * 0.2);
+        ctx.clip();
+        drawImageFit(img, box, box);
+        ctx.restore();
+      } else {
+        ctx.save();
+        rrect(-s / 2, -s / 2, s, s, rr);
+        ctx.clip();
+        drawImageFit(img, s, s);
+        ctx.restore();
+      }
+    } else {
+      // —— 没图片：内置矢量图标兜底 ——
+      rrect(-s / 2, -s / 2, s, s, rr);
+      ctx.fillStyle = t.light;
+      ctx.fill();
+      ctx.lineWidth = Math.max(1, cell * 0.03);
+      ctx.strokeStyle = rgba(t.color, 0.34);
+      ctx.stroke();
+
+      rrect(-s / 2 + s * 0.1, -s / 2 + s * 0.07, s * 0.8, s * 0.3, rr * 0.6);
+      ctx.fillStyle = 'rgba(255,255,255,.45)';
+      ctx.fill();
+
+      drawGlyph(t.key, s * 0.29, t);
+    }
+
+    if (isSel) {
+      const o = cell * 0.05;
+      rrect(-s / 2 - o, -s / 2 - o, s + o * 2, s + o * 2, rr * 1.2);
+      ctx.lineWidth = Math.max(2, cell * 0.075);
+      ctx.strokeStyle = t.color;
+      ctx.stroke();
+    }
+
+    if (hint && hint.until > now &&
+        ((hint.a.x === x && hint.a.y === y) || (hint.b.x === x && hint.b.y === y))) {
+      const pulse = 0.55 + 0.45 * Math.sin(now / 170);
+      const o = cell * 0.06;
+      rrect(-s / 2 - o, -s / 2 - o, s + o * 2, s + o * 2, rr * 1.25);
+      ctx.lineWidth = Math.max(2, cell * 0.085);
+      ctx.strokeStyle = rgba('#ef7a35', 0.35 + 0.65 * pulse);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function strokePoly(poly) {
+    ctx.beginPath();
+    ctx.moveTo(poly[0].x, poly[0].y);
+    for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i].x, poly[i].y);
+    ctx.stroke();
+  }
+
+  function drawPath(pts, prog, alpha) {
+    if (!pts || pts.length < 2) return;
+    const segs = [];
+    let total = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const p0 = px(pts[i - 1]), p1 = px(pts[i]);
+      const len = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+      if (len < 0.01) continue;
+      segs.push({ p0: p0, p1: p1, len: len });
+      total += len;
+    }
+    if (!segs.length) return;
+
+    const want = total * prog;
+    let acc = 0;
+    const poly = [segs[0].p0];
+    for (let i = 0; i < segs.length; i++) {
+      const s = segs[i];
+      if (acc + s.len <= want) {
+        poly.push(s.p1);
+        acc += s.len;
+      } else {
+        const k = (want - acc) / s.len;
+        poly.push({ x: s.p0.x + (s.p1.x - s.p0.x) * k, y: s.p0.y + (s.p1.y - s.p0.y) * k });
+        break;
+      }
+    }
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(255,255,255,.86)';
+    ctx.lineWidth = cell * 0.2;
+    strokePoly(poly);
+    ctx.strokeStyle = '#1a9c63';
+    ctx.lineWidth = cell * 0.105;
+    strokePoly(poly);
+
+    const a = px(pts[0]), b = px(pts[pts.length - 1]);
+    ctx.fillStyle = '#1a9c63';
+    ctx.globalAlpha = alpha * 0.85;
+    ctx.beginPath(); ctx.arc(a.x, a.y, cell * 0.1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(b.x, b.y, cell * 0.1, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function render(now) {
+    const w = sizeCss;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, w);
+
+    // 棋盘底
+    ctx.fillStyle = '#e7eee9';
+    ctx.fillRect(0, 0, w, w);
+
+    // 内部浅色棋格
+    ctx.fillStyle = '#f2f8f4';
+    for (let y = 1; y <= ROWS; y++) {
+      for (let x = 1; x <= COLS; x++) {
+        if ((x + y) % 2 === 0) ctx.fillRect(x * cell, y * cell, cell, cell);
+      }
+    }
+    ctx.strokeStyle = 'rgba(28,70,52,.08)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cell + 0.5, cell + 0.5, COLS * cell - 1, ROWS * cell - 1);
+
+    for (let y = 1; y <= ROWS; y++) {
+      for (let x = 1; x <= COLS; x++) {
+        const v = grid[y][x];
+        if (v) drawTile(x, y, v, now);
+      }
+    }
+
+    if (fx) {
+      const t = now - fx.t0;
+      const prog = Math.min(1, t / 240);
+      const alpha = t < 240 ? 1 : Math.max(0, 1 - (t - 240) / 170);
+      drawPath(fx.pts, prog, alpha);
+    }
+  }
+
+  /* ========== 主循环 ========== */
+  function loop(now) {
+    requestAnimationFrame(loop);
+
+    if (state === 'running') {
+      const dt = Math.min(now - lastTick, 200);
+      lastTick = now;
+      elapsed += dt;
+      timerEl.textContent = fmt(elapsed);
+    } else {
+      lastTick = now;
+    }
+
+    if (fx) {
+      const t = now - fx.t0;
+      if (!fx.hidden && t >= 190) {
+        fx.hidden = true;
+        grid[fx.a.y][fx.a.x] = 0;
+        grid[fx.b.y][fx.b.x] = 0;
+        locked = false;
+        const left = tilesLeft();
+        remainEl.textContent = left / 2;
+        if (left === 0) {
+          winGame();
+        } else if (!findPair()) {
+          shuffleRemaining();
+          remainEl.textContent = tilesLeft() / 2;
+          toast('没有可消除的组合，已自动重排');
+        }
+      }
+      if (t >= 430) fx = null;
+    }
+
+    if (bad && now - bad.t0 > 340) bad = null;
+    if (hint && now > hint.until) hint = null;
+
+    render(now);
+  }
+
+  /* ========== 遮罩层 ========== */
+  function showOverlay(type) {
+    let html = '';
+    if (type === 'ready') {
+      html = '<div class="c-title">开始连连看</div>' +
+             '<div class="c-desc">点两张<b>相同的方块</b>把它们消掉<br>' +
+             '连线最多拐两次弯，外圈也能绕<br>' +
+             '点一下棋盘就开始计时</div>';
+    } else if (type === 'paused') {
+      html = '<div class="c-title">已暂停</div>' +
+             '<div class="c-desc">点击屏幕或按空格继续</div>';
+    } else if (type === 'win') {
+      html = '<div class="badge">' + (newRecord ? '新纪录！' : '全部消除') + '</div>' +
+             '<div class="c-title">通关啦</div>' +
+             '<div class="c-desc">用时 <b>' + fmt(elapsed) + '</b><br>' +
+             '得分 <b>' + score + '</b>' +
+             (winBonus ? '<span class="orange">（含时间奖励 ' + winBonus + '）</span>' : '') +
+             '<br>历史最高 <span class="orange">' + best + '</span></div>' +
+             '<button class="c-btn" id="againBtn">再来一局</button>';
+    }
+    card.innerHTML = html;
+    overlay.classList.add('show');
+    const again = document.getElementById('againBtn');
+    if (again) {
+      again.addEventListener('click', function (e) {
+        e.stopPropagation();
+        resetGame();
+        start();
+      });
+    }
+  }
+  function hideOverlay() { overlay.classList.remove('show'); }
+
+  /* ========== 暂停按钮图标 ========== */
+  const SVG_PAUSE =
+    '<svg viewBox="0 0 24 24">' +
+      '<rect class="fill-icon" x="6.5" y="5" width="3.6" height="14" rx="1.4"/>' +
+      '<rect class="fill-icon" x="13.9" y="5" width="3.6" height="14" rx="1.4"/>' +
+    '</svg>';
+  const SVG_PLAY =
+    '<svg viewBox="0 0 24 24">' +
+      '<path class="fill-icon" d="M7.6 5.05a1.1 1.1 0 0 1 1.66-.95l9.1 5.35a1.1 1.1 0 0 1 0 1.9l-9.1 5.35a1.1 1.1 0 0 1-1.66-.95z"/>' +
+    '</svg>';
+
+  function setPauseIcon(playing) {
+    pauseIcon.innerHTML = playing ? SVG_PAUSE : SVG_PLAY;
+    btnPause.setAttribute('aria-label', playing ? '暂停' : '继续');
+  }
+
+  /* ========== 输入 ========== */
+  canvas.addEventListener('pointerdown', function (e) {
+    if (state !== 'running' || locked) return;
+    const p = pick(e);
+    if (!p) return;
+    e.preventDefault();
+    onTile(p);
+  }, { passive: false });
+
+  canvas.addEventListener('click', function () {
+    if (state === 'ready' || state === 'paused') start();
+    else if (state === 'over' && performance.now() - overAt > 700) { resetGame(); start(); }
+  });
+
+  card.addEventListener('click', function () {
+    if (state === 'ready' || state === 'paused') start();
+  });
+
+  window.addEventListener('keydown', function (e) {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); togglePause(); return; }
+    if (e.key === 'h' || e.key === 'H') { doHint(); return; }
+    if (e.key === 'r' || e.key === 'R') { doShuffle(); return; }
+    if (e.key === 'Escape') { if (state === 'running') pause(); }
+  });
+
+  btnHint.addEventListener('click', function (e) { e.stopPropagation(); doHint(); });
+  btnShuffle.addEventListener('click', function (e) { e.stopPropagation(); doShuffle(); });
+
+  btnPause.addEventListener('click', function (e) {
+    e.stopPropagation();
+    togglePause();
+  });
+
+  btnReset.addEventListener('click', function (e) {
+    e.stopPropagation();
+    resetGame();
+    toast('已重置');
+  });
+
+  btnBack.addEventListener('click', function (e) {
+    e.stopPropagation();
+    /* 返回游戏主页 */
+    window.location.href = '../index.html';
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && state === 'running') pause();
+  });
+
+  /* ========== 轻提示 ========== */
+  let toastTimer = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1400);
+  }
+
+  /* ========== 启动 ========== */
+  loadCustomImages();
+  resetGame();
+  resize();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
