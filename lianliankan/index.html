@@ -29,8 +29,9 @@
   }
 
   .app {
-    width: 100%;
-    max-width: 520px;
+    --app-w: 402px;              /* 版心宽度：固定值，屏幕再宽也不拉伸 */
+    width: var(--app-w);
+    max-width: 100%;
     height: 100vh;
     height: 100dvh;
     margin: 0 auto;
@@ -246,7 +247,7 @@
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
   @media (orientation: landscape) and (max-height: 520px) {
-    .app { max-width: 100%; }
+    .app { width: 100%; max-width: 100%; }
     .tools { --th: 44px; }
   }
 </style>
@@ -354,6 +355,7 @@
   const ROWS      = 8;
   const GX        = COLS + 2;           // 逻辑格 10 x 10，外圈空着用于绕行
   const GY        = ROWS + 2;
+  const EDGE_GAP  = 30;                 // 方块区到画板边缘的距离（外圈仅作连线绕行通道）
   const MATCH     = 10;                 // 每消一对得分
   const HINT_COST = 2;
   const STORE_KEY = 'link_best_score_v1';
@@ -396,6 +398,7 @@
   let lastTick  = 0;
   let sizeCss   = 300;
   let cell      = 30;
+  let margin    = 30;          // 方块区到画板边缘的实际距离
   let dpr       = 1;
   let bornAt    = 0;
   let hint      = null;        // {a,b,until}
@@ -414,7 +417,9 @@
     const avail = Math.min(rect.width, rect.height);
     const size = Math.max(160, Math.floor(avail) - 2);
     sizeCss = size;
-    cell = size / GX;
+    // 方块区尽量铺满画板：只留 EDGE_GAP 的绕行通道，屏幕过小时按比例缩
+    margin = Math.min(EDGE_GAP, size * 0.085);
+    cell = (size - margin * 2) / COLS;
     dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     canvas.style.width  = size + 'px';
     canvas.style.height = size + 'px';
@@ -670,10 +675,10 @@
   /* ========== 点击逻辑 ========== */
   function pick(ev) {
     const r = canvas.getBoundingClientRect();
-    const px = (ev.clientX - r.left) / r.width * sizeCss;
-    const py = (ev.clientY - r.top) / r.height * sizeCss;
-    const x = Math.floor(px / cell);
-    const y = Math.floor(py / cell);
+    const vx = (ev.clientX - r.left) / r.width * sizeCss;
+    const vy = (ev.clientY - r.top) / r.height * sizeCss;
+    const x = Math.floor((vx - margin) / cell) + 1;
+    const y = Math.floor((vy - margin) / cell) + 1;
     if (x < 1 || x > COLS || y < 1 || y > ROWS) return null;
     if (!grid[y][x]) return null;
     return { x: x, y: y };
@@ -723,7 +728,13 @@
   }
 
   /* ========== 渲染 ========== */
-  function px(p) { return { x: (p.x + 0.5) * cell, y: (p.y + 0.5) * cell }; }
+  // 逻辑格 → 像素中心：内部格按方块区排布，最外一圈映射到留白带中间
+  function g2px(n, max) {
+    if (n <= 0) return margin / 2;
+    if (n >= max - 1) return sizeCss - margin / 2;
+    return margin + (n - 0.5) * cell;
+  }
+  function px(p) { return { x: g2px(p.x, GX), y: g2px(p.y, GY) }; }
 
   function drawGlyph(kind, r, t) {
     const c = t.color, l = t.light;
@@ -854,7 +865,7 @@
 
   function drawTile(x, y, v, now) {
     const t = TYPES[v - 1];
-    const cx = (x + 0.5) * cell, cy = (y + 0.5) * cell;
+    const cx = margin + (x - 0.5) * cell, cy = margin + (y - 0.5) * cell;
     let dx = 0, dy = 0, scale = 1, alpha = 1;
 
     // 生成动画
@@ -885,7 +896,7 @@
     const isSel = !!(sel && sel.x === x && sel.y === y);
     if (isSel) scale *= 1.05;
 
-    const pad = cell * 0.07;
+    const pad = cell * 0.055;
     const s = cell - pad * 2;
     const rr = s * 0.29;
 
@@ -906,7 +917,7 @@
         ctx.strokeStyle = rgba(t.color, 0.34);
         ctx.stroke();
 
-        const inset = s * 0.14;
+        const inset = s * 0.06;      // 图片在卡片内留的边（越小图越大）
         const box = s - inset * 2;
         ctx.save();
         rrect(-box / 2, -box / 2, box, box, box * 0.2);
@@ -1020,16 +1031,18 @@
     ctx.fillStyle = '#e7eee9';
     ctx.fillRect(0, 0, w, w);
 
-    // 内部浅色棋格
+    // 内部浅色棋格（铺满方块区）
     ctx.fillStyle = '#f2f8f4';
     for (let y = 1; y <= ROWS; y++) {
       for (let x = 1; x <= COLS; x++) {
-        if ((x + y) % 2 === 0) ctx.fillRect(x * cell, y * cell, cell, cell);
+        if ((x + y) % 2 === 0) {
+          ctx.fillRect(margin + (x - 1) * cell, margin + (y - 1) * cell, cell, cell);
+        }
       }
     }
     ctx.strokeStyle = 'rgba(28,70,52,.08)';
     ctx.lineWidth = 1;
-    ctx.strokeRect(cell + 0.5, cell + 0.5, COLS * cell - 1, ROWS * cell - 1);
+    ctx.strokeRect(margin + 0.5, margin + 0.5, COLS * cell - 1, ROWS * cell - 1);
 
     for (let y = 1; y <= ROWS; y++) {
       for (let x = 1; x <= COLS; x++) {
@@ -1090,7 +1103,7 @@
     let html = '';
     if (type === 'ready') {
       html = '<div class="c-title">开始连连看</div>' +
-             '<div class="c-desc">点两张<b>相同的方块</b>把它们消掉<br>' +
+             '<div class="c-desc">点击两个<b>相同的奶蛙</b>把它们消掉<br>' +
              '连线最多拐两次弯，外圈也能绕<br>' +
              '点一下棋盘就开始计时</div>';
     } else if (type === 'paused') {

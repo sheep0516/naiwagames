@@ -29,8 +29,9 @@
   }
 
   .app {
-    width: 100%;
-    max-width: 520px;
+    --app-w: 402px;          /* 固定版心，屏幕再宽也不拉伸 */
+    width: var(--app-w);
+    max-width: 100%;         /* 只有比 402 更窄的屏才等比缩 */
     height: 100vh;
     height: 100dvh;
     margin: 0 auto;
@@ -244,7 +245,6 @@
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
   @media (orientation: landscape) and (max-height: 520px) {
-    .app { max-width: 100%; }
     .pad { --ph: 42px; }
   }
 </style>
@@ -712,7 +712,7 @@
     let html = '';
     if (type === 'ready') {
       html = '<div class="c-title">准备出发</div>' +
-             '<div class="c-desc">按下方方向键或滑动屏幕开始<br>吃掉苹果，别撞墙也别咬到自己</div>';
+             '<div class="c-desc">按下方方向键或滑动屏幕开始<br>吃掉奶鼠，别撞墙也别咬到自己</div>';
     } else if (type === 'paused') {
       html = '<div class="c-title">已暂停</div>' +
              '<div class="c-desc">点击屏幕或按方向键继续</div>';

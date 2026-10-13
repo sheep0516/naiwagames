@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#f0f6f2">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>合成大奶蛙</title>
-<style>
+<html lang="zh-CN" data-page-node-id="FT675dci4vxzuFCVSeeFJL"><head data-page-node-id="plPsabgHAC2KqjtmM5Z9Ct">
+<meta charset="UTF-8" data-page-node-id="9n9oV82mLpjTgtW7QeIagv">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" data-page-node-id="nBC5vSygVzJ9nP63MO4BLQ">
+<meta name="theme-color" content="#f0f6f2" data-page-node-id="80XOnxO6BtZiggllyMXD4L">
+<meta name="apple-mobile-web-app-capable" content="yes" data-page-node-id="s0mWSZnbzwdZ5LklkCXJx9">
+<title data-page-node-id="EIeQpwPdKN1wwhliaQXJtQ">合成大奶蛙</title>
+<style data-page-node-id="c4By2quFOuNZPMDQRBTwdi">
   * { box-sizing: border-box; }
 
   html, body {
@@ -29,8 +28,9 @@
   }
 
   .app {
-    width: 100%;
-    max-width: 520px;
+    --app-w: 402px;              /* 版心宽度：固定值，屏幕再宽也不拉伸 */
+    width: var(--app-w);
+    max-width: 100%;             /* 只有比版心更窄的屏才等比缩 */
     height: 100vh;
     height: 100dvh;
     margin: 0 auto;
@@ -215,79 +215,79 @@
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
   @media (orientation: landscape) and (max-height: 520px) {
-    .app { max-width: 100%; }
+    .app { width: 100%; max-width: 100%; }
     .title { display: none; }
     .tip { display: none; }
   }
 </style>
-</head>
-<body>
-<div class="app">
+<style id="__dm_no_drag_style__">* { -webkit-user-drag: none !important; }</style><style id="__dm_bindable_badge_style__">[data-sp-bindable="database"]{outline:1px dashed #0088ff;outline-offset:2px;border-radius:4px;}[data-sp-bindable="database"] *{pointer-events:none !important;transition:none !important;animation:none !important;}[data-sp-bindable="database"]{transition:none !important;animation:none !important;}</style></head>
+<body data-page-node-id="vkMs0VXdXnDuqpHVjusS9X" style="">
+<div class="app" data-page-node-id="0y4MkHG25q25IrNKgMRhko">
 
   <!-- 菜单栏 -->
-  <header class="topbar">
-    <div class="left">
-      <button class="icon-btn" id="btnBack" aria-label="返回">
-        <svg viewBox="0 0 24 24"><path d="M15 4.5 7.5 12 15 19.5"/></svg>
+  <header class="topbar" data-page-node-id="fCXFmN6wORQ83tbmJu3OzG">
+    <div class="left" data-page-node-id="JD6EvpFfHa9Y8bFGvStSdC">
+      <button class="icon-btn" id="btnBack" aria-label="返回" data-page-node-id="R958mbULn7pAnQHUgbvr3D">
+        <svg viewBox="0 0 24 24" data-page-node-id="cTPlEDU0LByGADNcatEPOU"><path d="M15 4.5 7.5 12 15 19.5" data-page-node-id="Apq2XpDBjtJMYs52GKmjwW"></path></svg>
       </button>
     </div>
-    <div class="title">合成大西瓜</div>
-    <div class="right">
-      <button class="icon-btn" id="btnSound" aria-label="音效">
-        <span id="soundIcon">
-          <svg viewBox="0 0 24 24">
-            <path d="M11 5 6.8 8.6H3.6v6.8h3.2L11 19z"/>
-            <path class="fill-icon" d="M11 5 6.8 8.6H3.6v6.8h3.2L11 19z"/>
+    <div class="title" data-page-node-id="ZUQByBQ4kOGAkBDkAYKKCN" style="">合成大奶蛙​</div>
+    <div class="right" data-page-node-id="2gQh1R5IEGkOfTsEuAfRto">
+      <button class="icon-btn" id="btnSound" aria-label="音效" data-page-node-id="Zpe3aPAByVKpQZydC6z1xq">
+        <span id="soundIcon" data-page-node-id="gJP9DLcdlFssT82HaXitD6">
+          <svg viewBox="0 0 24 24" data-page-node-id="n4GdhuWRxjsjk9KllpAdZf">
+            <path d="M11 5 6.8 8.6H3.6v6.8h3.2L11 19z" data-page-node-id="D7RJ5HqVEoWrE1t8cQ9Heh"></path>
+            <path class="fill-icon" d="M11 5 6.8 8.6H3.6v6.8h3.2L11 19z" data-page-node-id="wRwqbbYBPLaFnTxmrAsNNI"></path>
           </svg>
         </span>
       </button>
-      <button class="icon-btn" id="btnPause" aria-label="暂停">
-        <span id="pauseIcon">
-          <svg viewBox="0 0 24 24">
-            <rect class="fill-icon" x="6.5" y="5" width="3.6" height="14" rx="1.4"/>
-            <rect class="fill-icon" x="13.9" y="5" width="3.6" height="14" rx="1.4"/>
+      <button class="icon-btn" id="btnPause" aria-label="暂停" data-page-node-id="2kFyOVNBgjuCKi3BxJ3BvI">
+        <span id="pauseIcon" data-page-node-id="afHJv87eIWyntykXQ7AmJT">
+          <svg viewBox="0 0 24 24" data-page-node-id="8bKXt5y41YHEjchVzE9M8V">
+            <rect class="fill-icon" x="6.5" y="5" width="3.6" height="14" rx="1.4" data-page-node-id="WptZPHwvqInOw9H7JujxE0"></rect>
+            <rect class="fill-icon" x="13.9" y="5" width="3.6" height="14" rx="1.4" data-page-node-id="YLQOaHOQsFPHdaW5MrFwQE"></rect>
           </svg>
         </span>
       </button>
-      <button class="icon-btn" id="btnReset" aria-label="重置">
-        <svg viewBox="0 0 24 24">
-          <path d="M20 12a8 8 0 1 1-2.6-5.9"/>
-          <path d="M20 4.5V10h-5.2"/>
+      <button class="icon-btn" id="btnReset" aria-label="重置" data-page-node-id="argEC1ARnguev22WwsmHGx">
+        <svg viewBox="0 0 24 24" data-page-node-id="iFdCiTnBoESxOw2tDsiWa2">
+          <path d="M20 12a8 8 0 1 1-2.6-5.9" data-page-node-id="TE1MBdvxXJUhberLhBRyhM"></path>
+          <path d="M20 4.5V10h-5.2" data-page-node-id="Xni7NnSnJ8Is1TSam3T6LG"></path>
         </svg>
       </button>
     </div>
   </header>
 
   <!-- 数据 -->
-  <div class="scores">
-    <div class="score-card">
-      <span class="label">得分</span>
-      <span class="value" id="score">0</span>
+  <div class="scores" data-page-node-id="nYhbjpJTGkFlU52qEAJ4vi">
+    <div class="score-card" data-page-node-id="8HVSjlAj0Z0M9hmUBE65AC">
+      <span class="label" data-page-node-id="AZwnAnPHDeGi9nEV1IbDqD">得分</span>
+      <span class="value" id="score" data-page-node-id="WTLuyB6TRuDrDDBXHPTsLf">0</span>
     </div>
-    <div class="score-card mid">
-      <span class="label">最高</span>
-      <span class="value best" id="best">0</span>
+    <div class="score-card mid" data-page-node-id="mHH5zeWAgGhGkYT2YL5cL9">
+      <span class="label" data-page-node-id="8FcGuOGpWWWslTTc2XERVr">最高</span>
+      <span class="value best" id="best" data-page-node-id="8Ok6QB5FWUzBSWfVnP6FMw">0</span>
     </div>
-    <div class="next-box">
-      <span class="label">下一个</span>
-      <canvas id="nextCv"></canvas>
+    <div class="next-box" data-page-node-id="BPMYrq3SBfx9nyp8jb9KHm">
+      <span class="label" data-page-node-id="dhTOi1ROYy9uebVDDNMrxN">下一个</span>
+      <canvas id="nextCv" data-page-node-id="4vguz1OGJsyNPo8BGmZHRr"></canvas>
     </div>
   </div>
 
   <!-- 游戏窗口 -->
-  <div class="board-wrap" id="boardWrap">
-    <canvas id="game"></canvas>
-    <div class="overlay" id="overlay">
-      <div class="card" id="overlayCard"></div>
+  <div class="board-wrap" id="boardWrap" data-page-node-id="FNWf7XPDWXTFHAyvTJdE03">
+    <canvas id="game" data-page-node-id="4xXyLJAHC2Y110oOXNOhFJ"></canvas>
+    <div class="overlay" id="overlay" data-page-node-id="fibvFyk5bzDCmnaTdqaAaM">
+      <div class="card" id="overlayCard" data-page-node-id="A8UE2QBMg8P6lOLP3nrnba"></div>
     </div>
   </div>
 
-  <div class="tip" id="tip">拖动调整位置 · 松手投放</div>
+  <div class="tip" id="tip" data-page-node-id="E6sryOAJaYoJqKgMhabavw">拖动调整位置 · 松手投放</div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" data-page-node-id="4aZOY4L77hAai7ZepzKqTp"></div>
 
-<script>
+<script data-page-node-id="MqKZXn8mxti1mnlnKdsmTk">
 (function () {
   'use strict';
 
@@ -1221,11 +1221,11 @@
     let html = '';
     if (type === 'ready') {
       html =
-        '<div class="c-title">合成大西瓜</div>' +
+        '<div class="c-title">合成大奶蛙</div>' +
         '<div class="c-desc">' +
           '移动手指选好位置，松手投放。<br>' +
-          '两个<b>相同</b>的水果碰到一起就合成更大的一个。<br>' +
-          '堆过红线就结束了，冲一个<span class="badge">大西瓜</span>出来吧！' +
+          '两个<b>相同</b>的奶蛙碰到一起就合成更大的一个。<br>' +
+          '堆过红线就结束了，冲一个<span class="badge">大奶蛙</span>出来吧！' +
         '</div>' +
         '<button class="c-btn" id="againBtn">开始游戏</button>';
     } else if (type === 'pause') {
@@ -1389,5 +1389,6 @@
   requestAnimationFrame(loop);
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
