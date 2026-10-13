@@ -989,14 +989,14 @@
     drawNext();
   }
 
+  // 开始 / 重开一局。over 与 ready 都会清盘，paused 只是继续。
   function start() {
-    if (state === 'ready' || state === 'paused') {
-      if (state === 'ready') resetGame();
-      state = 'running';
-      hideOverlay();
-      setPauseIcon(true);
-      if (audio()) audio();
-    }
+    if (state === 'running') return;
+    if (state !== 'paused') resetGame();
+    state = 'running';
+    hideOverlay();
+    setPauseIcon(true);
+    if (audio()) audio();
   }
 
   function pause() {
@@ -1007,10 +1007,9 @@
   }
 
   function togglePause() {
-    if (state === 'running') pause();
-    else if (state === 'paused') start();
-    else if (state === 'over' && performance.now() - overAt > 600) { resetGame(); start(); }
-    else if (state === 'ready') start();
+    if (state === 'running') { pause(); return; }
+    if (state === 'over' && performance.now() - overAt < 600) return;  // 结束瞬间防误触
+    start();
   }
 
   function gameOver() {
@@ -1249,10 +1248,9 @@
     overlay.classList.add('show');
     const btn = document.getElementById('againBtn');
     if (btn) {
+      // 开始游戏 / 继续 / 再来一局 走同一个入口：start() 按状态自行决定是否清盘
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
-        if (type === 'pause') { start(); return; }
-        resetGame();
         start();
       });
     }
@@ -1302,12 +1300,13 @@
   canvas.addEventListener('pointercancel', function () { dragging = false; });
 
   canvas.addEventListener('click', function () {
-    if (state === 'ready') start();
-    else if (state === 'over' && performance.now() - overAt > 600) { resetGame(); start(); }
+    if (state === 'running') return;
+    if (state === 'over' && performance.now() - overAt < 600) return;   // 结束瞬间防误触
+    start();
   });
 
   card.addEventListener('click', function () {
-    if (state === 'ready') start();
+    if (state === 'ready' || state === 'paused') start();
   });
 
   window.addEventListener('keydown', function (e) {
