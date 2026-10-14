@@ -246,8 +246,8 @@
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+  /* 横屏矮屏只收窄按钮高度，版心宽度不随屏幕方向变化 */
   @media (orientation: landscape) and (max-height: 520px) {
-    .app { width: 100%; max-width: 100%; }
     .tools { --th: 44px; }
   }
 </style>

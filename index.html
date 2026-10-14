@@ -108,6 +108,10 @@
   .card:nth-child(1) { animation-delay: .05s; }
   .card:nth-child(2) { animation-delay: .12s; }
   .card:nth-child(3) { animation-delay: .19s; }
+  .card:nth-child(4) { animation-delay: .26s; }
+  .card:nth-child(5) { animation-delay: .33s; }
+  .card:nth-child(6) { animation-delay: .40s; }
+  .card:nth-child(7) { animation-delay: .47s; }
 
   .card::after {
     content: "";
@@ -191,11 +195,11 @@
     to   { opacity: 1; transform: none; }
   }
 
-  /* ---------- 宽屏：三张卡片并排 ---------- */
+  /* ---------- 宽屏：卡片两列并排 ---------- */
   @media (min-width: 720px) {
     .app { padding-top: calc(48px + env(safe-area-inset-top)); }
     .hero { padding-bottom: 32px; }
-    .grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
     .card {
       flex-direction: column;
       align-items: center;
@@ -216,7 +220,7 @@
     * { animation: none !important; transition: none !important; }
   }
 </style>
-<style id="__dm_no_drag_style__" data-page-node-id="xncZgPnnKqy707mZZ1fC7d">* { -webkit-user-drag: none !important; }</style><style id="__dm_bindable_badge_style__" data-page-node-id="rYqw2uCPFIAATByLjbBnjB">[data-sp-bindable="database"]{outline:1px dashed #0088ff;outline-offset:2px;border-radius:4px;}[data-sp-bindable="database"] *{pointer-events:none !important;transition:none !important;animation:none !important;}[data-sp-bindable="database"]{transition:none !important;animation:none !important;}</style></head>
+<style id="__dm_no_drag_style__">* { -webkit-user-drag: none !important; }</style><style id="__dm_bindable_badge_style__">[data-sp-bindable="database"]{outline:1px dashed #0088ff;outline-offset:2px;border-radius:4px;}[data-sp-bindable="database"] *{pointer-events:none !important;transition:none !important;animation:none !important;}[data-sp-bindable="database"]{transition:none !important;animation:none !important;}</style></head>
 <body data-page-node-id="Cr7Xju5zXVtTOotnB6HLKG" style="">
 
 <div class="bg" aria-hidden="true" data-page-node-id="RNLjZJeC7nDIzSUxFXSYnM">
@@ -330,11 +334,131 @@
       </div>
     </a>
 
+    <!-- 2048 -->
+    <a class="card" href="g2048/index.html" style="--c1:#f59e0b; --csoft:rgba(245,158,11,.14);" data-page-node-id="dwuvWN1G3Jl3GGYOzkhmkJ">
+      <div class="ico" data-page-node-id="WRdmu1QIzn5KDsBUbXVeiM">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-page-node-id="HHFHqKTNA0qC3iiNF7lKf3">
+          <rect x="14" y="14" width="42" height="42" rx="12" fill="#fde68a" data-page-node-id="GuyfviUyKUdxCR8unC5fOg"></rect>
+          <rect x="64" y="14" width="42" height="42" rx="12" fill="#fbbf24" data-page-node-id="H7KnqB9rSS4niw9leKsnaF"></rect>
+          <rect x="14" y="64" width="42" height="42" rx="12" fill="#f59e0b" data-page-node-id="SQzDuD2pXadVX94L4EXp3K"></rect>
+          <rect x="64" y="64" width="42" height="42" rx="12" fill="#ffffff" stroke="#f59e0b" stroke-opacity=".38" stroke-width="2.5" data-page-node-id="0LdwGDCNABIsfJj03NcH9w"></rect>
+        </svg>
+      </div>
+      <div class="meta" data-page-node-id="QaTd2T7dBfBAZ2Tnw7eDt5">
+        <div class="name" data-page-node-id="YEWiUZfFXMIFBPmTQ81jx7">奶蛙 2048</div>
+        <div class="desc" data-page-node-id="TBFwz3L6QdudHN9X8FwCpT">滑动把相同的数字推到一起，一路翻倍合出 2048。</div>
+        <div class="tags" data-page-node-id="ToCLzu68YTXGnpAmVRdIDF"><span class="tag" data-page-node-id="8zQAjrQGYbxs00ZgSpXjGq">益智</span><span class="tag" data-page-node-id="RY1jf0bU6K2xZXwUaF1gLx">策略</span></div>
+      </div>
+      <div class="go" aria-hidden="true" data-page-node-id="wm18sNNJUDAIGOwGtlOA2l">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="FNupJAVDSKYm3V9mFuI9mF"><path d="M9 5l7 7-7 7" data-page-node-id="dj0ozs5RXLku4UzrsjxFal"></path></svg>
+      </div>
+    </a>
+
+    <!-- 记忆翻牌 -->
+    <a class="card" href="fanpai/index.html" style="--c1:#8b5cf6; --csoft:rgba(139,92,246,.13);" data-page-node-id="C2Nc4jorxPK8neLO3y2dcu">
+      <div class="ico" data-page-node-id="FgMmC1GOJCWykbNq4fCHDi">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-page-node-id="ZyPQbIwUD1WrbEW98BXtyl">
+          <rect x="12" y="28" width="44" height="62" rx="12" fill="#c4b5fd" data-page-node-id="w7WO0Q1iGi6oNCS1q6nDST"></rect>
+          <circle cx="34" cy="45" r="3.6" fill="#fff" opacity=".6" data-page-node-id="3qZfaskd0kIawuQR2utHzT"></circle>
+          <circle cx="34" cy="59" r="3.6" fill="#fff" opacity=".92" data-page-node-id="I2HFB4RF5lSDGzgWRcV4Ok"></circle>
+          <circle cx="34" cy="73" r="3.6" fill="#fff" opacity=".6" data-page-node-id="vX5wAnCBu8ETYZ2FuHyC5i"></circle>
+          <g transform="rotate(7 79 52)" data-page-node-id="qxp5g9rGEbEAgzlSBFx5gE">
+            <rect x="56" y="20" width="46" height="64" rx="12" fill="#ffffff" stroke="#8b5cf6" stroke-opacity=".4" stroke-width="3" data-page-node-id="Gdctvd0E8UGaCCMivbxUXT"></rect>
+            <circle cx="79" cy="52" r="14.5" fill="#f59e0b" data-page-node-id="vQXEtM7JB6vlbjiFnzvoJX"></circle>
+            <path d="M79 37c1.5-5.2 5-7.6 9.2-8.2" stroke="#22c55e" stroke-width="4" stroke-linecap="round" data-page-node-id="FtuiJ4PIEFhyxEaKMBS7hL"></path>
+            <path d="M66.5 52.5c0-7 5.6-12.6 12.6-12.6" stroke="#ffffff" stroke-opacity=".5" stroke-width="3.4" stroke-linecap="round" data-page-node-id="INLajbITtX163dwic0Mvap"></path>
+          </g>
+        </svg>
+      </div>
+      <div class="meta" data-page-node-id="0aCouFRfObLAfN4hTh5jwa">
+        <div class="name" data-page-node-id="7E9FwHX0SmPZ6By2lVjnpC">奶蛙翻翻乐</div>
+        <div class="desc" data-page-node-id="Qb1U4mrkCPN3hZr90F7fYY">点开两张卡，记住奶蛙的位置，把成对的都找出来。</div>
+        <div class="tags" data-page-node-id="CvvRdFMAcKx5GW9F6FzeLr"><span class="tag" data-page-node-id="ECDlO2f0kx2nO1cfnvTISv">休闲</span><span class="tag" data-page-node-id="qF2vWxh5qv4tqFcZkSaydd">记忆力</span></div>
+      </div>
+      <div class="go" aria-hidden="true" data-page-node-id="lC6oLHTMahzpgKFxy8g7wA">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="cAqWu8ofn0BBJuRzcAfDIq"><path d="M9 5l7 7-7 7" data-page-node-id="boWpxhKXeisPtnQFAKW77k"></path></svg>
+      </div>
+    </a>
+
+    <!-- 打砖块 -->
+    <a class="card" href="bricks/index.html" style="--c1:#4a97e0; --csoft:rgba(74,151,224,.14);" data-page-node-id="VQsrU0NRIKGqJBfsOsbDDZ">
+      <div class="ico" data-page-node-id="RgfaUEUWkMTeEmpT66h1YH">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-page-node-id="VS84wjg1ueJm4arHfrmsRL">
+          <rect x="12" y="14" width="30" height="17" rx="6" fill="#4a97e0" data-page-node-id="9bFizyb0Cm33vhPDh9Cowo"></rect>
+          <rect x="46" y="14" width="30" height="17" rx="6" fill="#ffffff" stroke="#4a97e0" stroke-opacity=".38" stroke-width="2.5" data-page-node-id="PWIRVVKcAV8tkYPr4bkIYj"></rect>
+          <rect x="80" y="14" width="30" height="17" rx="6" fill="#4a97e0" data-page-node-id="LrvaRwb7EQu3Olvj8suWob"></rect>
+          <rect x="12" y="35" width="30" height="17" rx="6" fill="#ffffff" stroke="#4a97e0" stroke-opacity=".38" stroke-width="2.5" data-page-node-id="1Eah8m2KHSfguMyxgVHWye"></rect>
+          <rect x="46" y="35" width="30" height="17" rx="6" fill="#4a97e0" data-page-node-id="j6HsAsyb4AkPgVChjFK5RK"></rect>
+          <rect x="80" y="35" width="30" height="17" rx="6" fill="#7db8ec" data-page-node-id="lJSRdOs6rHDTxaVseighv3"></rect>
+          <rect x="12" y="56" width="30" height="17" rx="6" fill="#7db8ec" data-page-node-id="MzMHiFp6Z9EDpFnbhCb7Bi"></rect>
+          <rect x="46" y="56" width="30" height="17" rx="6" fill="#ffffff" stroke="#4a97e0" stroke-opacity=".38" stroke-width="2.5" data-page-node-id="LO3DeE00ABfpHp8LOvShib"></rect>
+          <rect x="80" y="56" width="30" height="17" rx="6" fill="#4a97e0" data-page-node-id="ItDmBNgLmmzR55PHbKNYsH"></rect>
+          <circle cx="86" cy="92" r="11" fill="#4a97e0" data-page-node-id="hQsOVuqgBhOxHsr67Kjlv2"></circle>
+          <ellipse cx="82.5" cy="88" rx="3.4" ry="2.4" fill="#fff" opacity=".6" transform="rotate(-32 82.5 88)" data-page-node-id="WajXyFS9iG1sAhPQpt6CYK"></ellipse>
+          <rect x="20" y="99" width="52" height="11" rx="5.5" fill="#2f7fce" data-page-node-id="5l5BdJHbvgylVw6BLYHHin"></rect>
+          <rect x="25" y="101" width="42" height="3.5" rx="1.75" fill="#fff" opacity=".38" data-page-node-id="SNdBhbKL69xctAys8NaeK2"></rect>
+        </svg>
+      </div>
+      <div class="meta" data-page-node-id="9ljjgSlvUECBcAVi1cVxYG">
+        <div class="name" data-page-node-id="FIohEqvxk9H4z4CmZEJuin">奶蛙打砖块</div>
+        <div class="desc" data-page-node-id="3jq4AhDdrrlNAfhAO0utoK">滑动挡板接住奶豆，把整墙砖块打光，连击还有额外加分。</div>
+        <div class="tags" data-page-node-id="Cs7yV5MpmQQiTW0IBKGCJ3"><span class="tag" data-page-node-id="g4agEVVmu4SWcOFdPSTdC9">街机</span><span class="tag" data-page-node-id="oAaqoOYGWb7LKL4CN9kzNF">反应力</span></div>
+      </div>
+      <div class="go" aria-hidden="true" data-page-node-id="71mfaI3tj8skMKPXxSRWXY">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="iHMLpXlV4kNUNdfRQKYKJB"><path d="M9 5l7 7-7 7" data-page-node-id="08HulHYwDFSGG2vXtRFqSy"></path></svg>
+      </div>
+    </a>
+
+    <!-- 扫雷 -->
+    <a class="card" href="minesweeper/index.html" style="--c1:#ef7a35; --csoft:rgba(239,122,53,.13);" data-page-node-id="quYOracHtOtr2uUf0haGOy">
+      <div class="ico" data-page-node-id="KkGhzH6mK47iNoMIXx6BGU">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-page-node-id="jg8bzlMZKhyuhGod02OwnT">
+          <rect x="10" y="10" width="100" height="100" rx="24" fill="#ffffff" stroke="#ef7a35" stroke-opacity=".3" stroke-width="3" data-page-node-id="4KP9vrE8oBSvtGBJecRamn"></rect>
+          <path d="M34 91h32" stroke="#7b9187" stroke-width="7" stroke-linecap="round" data-page-node-id="cqmRq9WjG9FhPk5mVAkMdK"></path>
+          <path d="M50 91V30" stroke="#7b9187" stroke-width="7" stroke-linecap="round" data-page-node-id="7Im2HR4BHddbwjAjsXLHuX"></path>
+          <path d="M53.5 33.5 88 46.5 53.5 59.5Z" fill="#ef7a35" data-page-node-id="SKltGamPQ1tYYBtm9Q4uuy"></path>
+        </svg>
+      </div>
+      <div class="meta" data-page-node-id="RZuXL8KknCBMH0BxsqKv1V">
+        <div class="name" data-page-node-id="kmtrbeDOPUaWWi4RZ4sytz" style="white-space: pre-wrap;">扫奶蛙
+</div>
+        <div class="desc" data-page-node-id="v2YQHcz3siMp1ph63NCL9C" style="white-space: pre-wrap;">翻开格子，用数字推断奶蛙藏在哪，长按插旗标记，把安全格全部排出来。​</div>
+        <div class="tags" data-page-node-id="EGGaegGhqHSfcqGzOQ9Dgn"><span class="tag" data-page-node-id="PQcHtMvbuD6mwG3Chk0Pvm">经典</span><span class="tag" data-page-node-id="HTQ83tB1bHXcKsCS6NgclZ">推理</span></div>
+      </div>
+      <div class="go" aria-hidden="true" data-page-node-id="HPC2vHakXPq2Bk5Qfdk00C">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="Asb5ac45cS0yPA9CtnxURY"><path d="M9 5l7 7-7 7" data-page-node-id="UJFsws3PPWjrZw1sgzk8Ua"></path></svg>
+      </div>
+    </a>
+
+    <!-- 数独 -->
+    <a class="card" href="sudoku/index.html" style="--c1:#6366f1; --csoft:rgba(99,102,241,.13);" data-page-node-id="bRu4gHU4h383xtVC8urgbf">
+      <div class="ico" data-page-node-id="njJGfYGHmooiI6ydF1aOGD">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-page-node-id="Y8dX31OyBpkTa5eSwFLXD5">
+          <rect x="12" y="12" width="96" height="96" rx="24" fill="#ffffff" stroke="#6366f1" stroke-opacity=".3" stroke-width="3" data-page-node-id="vaf92ndRe8f4XTipsSjC85"></rect>
+          <rect x="44" y="44" width="32" height="32" fill="#6366f1" opacity=".16" data-page-node-id="tkGn99JiG071A6wtYpD34m"></rect>
+          <path d="M44 14v92M76 14v92M14 44h92M14 76h92" stroke="#6366f1" stroke-opacity=".2" stroke-width="2.4" data-page-node-id="IaUfpyXax3os8sZMJfbqNw"></path>
+          <text x="28" y="34" text-anchor="middle" font-size="17" font-weight="700" fill="#1c2b23" opacity=".5" data-page-node-id="kt8VMu4clXvT7dXEaVHthL">5</text>
+          <text x="60" y="67.5" text-anchor="middle" font-size="23" font-weight="800" fill="#6366f1" data-page-node-id="zGGZpUWPd5QwBI5mmTN1c9">9</text>
+          <text x="92" y="98" text-anchor="middle" font-size="17" font-weight="700" fill="#1c2b23" opacity=".5" data-page-node-id="kYTiL0W0P4M244x4syIFBx">3</text>
+        </svg>
+      </div>
+      <div class="meta" data-page-node-id="1gcpDibDfP0TyiYvyeox5k">
+        <div class="name" data-page-node-id="HIE3fCA4xf2iXF11PvOVVI" style="white-space: pre-wrap;">奶独</div>
+        <div class="desc" data-page-node-id="RblQ2tjKkrMHPEfeJ5jhiz">9×9 格子里填 1-9，每行、每列、每个 3×3 宫都不能重复。</div>
+        <div class="tags" data-page-node-id="alSLMczCSCZj87uLGMGTND"><span class="tag" data-page-node-id="oW6M7lrUiWZhnFQ0dO5KdE">益智</span><span class="tag" data-page-node-id="ivpB2zm022izcFI4PWwaE7">逻辑</span></div>
+      </div>
+      <div class="go" aria-hidden="true" data-page-node-id="EipOpdEKBJ31ZOITHbRlMy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="YCgC0Hb7l658Ac2oF5WpwL"><path d="M9 5l7 7-7 7" data-page-node-id="VOyLZPmGze9vV6sgeHiHWO"></path></svg>
+      </div>
+    </a>
+
   </section>
 
   
 
 </main>
+
+
 
 
 

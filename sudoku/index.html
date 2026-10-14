@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#eef3f0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>奶蛙数独</title>
+<style>
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: #1c2b23;
+    background: radial-gradient(120% 80% at 50% 0%, #f7fbf8 0%, #e7efe9 100%);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  .app {
+    --app-w: 402px;              /* 版心宽度：固定值，屏幕再宽也不拉伸 */
+    width: var(--app-w);
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0 auto;
+    padding: calc(6px + env(safe-area-inset-top)) 12px calc(8px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ---------- 顶部菜单栏 ---------- */
+  .topbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+  }
+
+  .topbar .right {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid #dde8e1;
+    border-radius: 13px;
+    background: #ffffff;
+    color: #2f4a3c;
+    box-shadow: 0 2px 6px rgba(31, 74, 55, 0.06);
+    transition: transform .08s ease, background .15s ease, color .15s ease;
+    cursor: pointer;
+  }
+  .icon-btn:active { transform: scale(0.92); background: #f1f6f3; }
+  .icon-btn > span { display: flex; align-items: center; justify-content: center; }
+  .icon-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor;
+                  stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn:disabled { color: #c2d2c9; cursor: default; }
+  .icon-btn:disabled:active { transform: none; background: #ffffff; }
+  /* 笔记模式开启态 */
+  .icon-btn.on {
+    color: #fff;
+    border-color: transparent;
+    background: linear-gradient(135deg, #ffa63d, #f2691f);
+    box-shadow: 0 3px 10px rgba(242, 105, 31, .28);
+  }
+
+  .timer {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    font-variant-numeric: tabular-nums;
+    color: #24463a;
+    padding: 4px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .72);
+  }
+
+  /* ---------- 数据区 ---------- */
+  .scores {
+    flex: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .score-card {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    transition: transform .08s ease;
+  }
+  .score-card.mid { justify-content: center; cursor: pointer; }
+  .score-card.mid:active { transform: scale(.94); }
+  .score-card.end { justify-content: flex-end; }
+  .score-card .label {
+    font-size: 12.5px;
+    color: #7b9187;
+    white-space: nowrap;
+  }
+  .score-card .value {
+    font-size: 20px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #1a9c63;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+  .score-card .value.best { color: #ef7a35; }
+  .score-card .value.left { color: #4a97e0; }
+  .score-card .caret {
+    width: 11px; height: 11px;
+    flex: none;
+    align-self: center;
+    fill: none;
+    stroke: #a9bdb3;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ---------- 游戏窗口 ---------- */
+  .board-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #game {
+    display: block;
+    border-radius: 18px;
+    background: #f2f8f4;
+    box-shadow: 0 8px 24px rgba(28, 70, 52, .10), 0 0 0 1px rgba(28, 70, 52, .06);
+    touch-action: none;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .18s ease;
+  }
+  .overlay.show { opacity: 1; }
+  .overlay.show .card { pointer-events: auto; }
+  .overlay .card {
+    max-width: 88%;
+    padding: 18px 24px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 10px 30px rgba(24, 60, 44, .16);
+    text-align: center;
+  }
+  .overlay .c-title { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+  .overlay .c-desc { font-size: 13.5px; line-height: 1.7; color: #6c8378; }
+  .overlay .c-desc b { color: #1a9c63; font-size: 16px; }
+  .overlay .c-desc .orange { color: #ef7a35; }
+  .overlay .badge {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #ffa63d, #f2691f);
+  }
+  .overlay .c-btn {
+    margin-top: 14px;
+    padding: 10px 26px;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #26b878, #149b60);
+    box-shadow: 0 6px 16px rgba(26, 156, 99, .28);
+    cursor: pointer;
+    transition: transform .08s ease;
+  }
+  .overlay .c-btn:active { transform: scale(0.95); }
+  .overlay .c-levels {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .overlay .c-levels button {
+    padding: 6px 13px;
+    border: 1px solid #dbe6df;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff, #f3f8f5);
+    color: #2c6a4f;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .07s ease, background .12s ease, color .12s ease;
+  }
+  .overlay .c-levels button:active { transform: scale(0.94); }
+  .overlay .c-levels button.active {
+    color: #fff;
+    border-color: transparent;
+    background: linear-gradient(135deg, #26b878, #149b60);
+    box-shadow: 0 3px 9px rgba(26, 156, 99, .26);
+  }
+
+  /* ---------- 底部数字键盘 ---------- */
+  .pad {
+    --ph: clamp(40px, 6.2vh, 50px);
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 7px;
+    width: min(100%, 380px);
+    margin: 2px auto 0;
+    touch-action: none;
+  }
+  .pad .key {
+    position: relative;
+    height: var(--ph);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid #dbe6df;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff, #f3f8f5);
+    color: #2c6a4f;
+    font-family: inherit;
+    box-shadow: 0 3px 8px rgba(31, 74, 55, .07);
+    transition: transform .07s ease, background .12s ease, color .12s ease;
+    cursor: pointer;
+    touch-action: none;
+  }
+  .pad .key:active { transform: scale(0.94); }
+  .pad .key b {
+    font-size: 20px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #245f45;
+    line-height: 1;
+  }
+  /* 键盘上的数字也用同一套贴图：绝对定位盖在 <b> 上；
+     贴图加载失败时 onerror 会把 <img> 摘掉，露出下面的矢量数字（不会出破图）。
+     高度给到 84% —— 太小（<30px）角色细节会糊成一块，看着发灰。 */
+  .pad .key img {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    height: 84%;
+    width: auto;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+  .pad .key i {
+    position: absolute;
+    top: 4px; right: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
+    color: #a9bdb3;
+  }
+  /* 这个数字已经用满 9 个 */
+  .pad .key.done b { color: #c3d2ca; }
+  .pad .key.done img { opacity: .3; }
+  /* 当前选中格里就是这个数字 */
+  .pad .key.sel {
+    border-color: #1a9c63;
+    background: linear-gradient(180deg, #eaf7f0, #d9efe5);
+    box-shadow: inset 0 0 0 1px rgba(26, 156, 99, .3), 0 3px 8px rgba(31, 74, 55, .07);
+  }
+  .pad .key.erase svg {
+    width: 24px; height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ---------- 提示 ---------- */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    transform: translate(-50%, 12px);
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    color: #fff;
+    background: rgba(30, 48, 40, .88);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease;
+    z-index: 99;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* 横屏矮屏：只收窄底部键盘高度，版心宽度不变 */
+  @media (orientation: landscape) and (max-height: 520px) {
+    .pad { --ph: 38px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 菜单栏 -->
+  <header class="topbar">
+    <div class="left">
+      <button class="icon-btn" id="btnBack" aria-label="返回">
+        <svg viewBox="0 0 24 24"><path d="M15 4.5 7.5 12 15 19.5"/></svg>
+      </button>
+    </div>
+    <div class="timer" id="timer">00:00</div>
+    <div class="right">
+      <button class="icon-btn" id="btnUndo" aria-label="撤销" disabled>
+        <svg viewBox="0 0 24 24">
+          <path d="M8.4 8.2h5.8a4.6 4.6 0 0 1 0 9.2h-2.6"/>
+          <path d="M11.8 4.6 8.4 8.2l3.4 3.6"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btnNote" aria-label="笔记模式">
+        <svg viewBox="0 0 24 24">
+          <path d="M16.1 4.7 19.3 7.9 8.5 18.7 4.7 19.3 5.3 15.5z"/>
+          <path d="M14.2 6.6 17.4 9.8"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btnReset" aria-label="重新开始">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 12a8 8 0 1 1-2.6-5.9"/>
+          <path d="M20 4.5V10h-5.2"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 数据 -->
+  <div class="scores">
+    <div class="score-card">
+      <span class="label">空格</span>
+      <span class="value left" id="blanks">0</span>
+    </div>
+    <button class="score-card mid" id="btnLevel" aria-label="切换难度">
+      <span class="label">难度</span>
+      <span class="value" id="lvName">简单</span>
+      <svg class="caret" viewBox="0 0 24 24"><path d="M7.5 10.5 12 15l4.5-4.5"/></svg>
+    </button>
+    <div class="score-card end">
+      <span class="label">最佳</span>
+      <span class="value best" id="best">--</span>
+    </div>
+  </div>
+
+  <!-- 游戏窗口 -->
+  <div class="board-wrap" id="boardWrap">
+    <canvas id="game"></canvas>
+    <div class="overlay" id="overlay">
+      <div class="card" id="overlayCard"></div>
+    </div>
+  </div>
+
+  <!-- 数字键盘 -->
+  <div class="pad" id="pad">
+    <button class="key" data-v="1" aria-label="填 1"><b>1</b><img src="img/1.png" alt="" aria-hidden="true" draggable="false"><i>9</i></button>
+    <button class="key" data-v="2" aria-label="填 2"><b>2</b><img src="img/2.png" alt="" aria-hidden="true" draggable="false"><i>9</i></button>
+    <button class="key" data-v="3" aria-label="填 3"><b>3</b><img src="img/3.png" alt="" aria-hidden="true" draggable="false"><i>9</i></button>
+    <button class="key" data-v="4" aria-label="填 4"><b>4</b><img src="img/4.png" alt="" aria-hidden="true" draggable="false"><i>9</i></button>
+    <button class="key" data-v="5" aria-label="填 5"><b>5</b><img src="img/5.png" alt="" aria-hidden="true" draggable="false"><i>9</i></button>
+    <button class="key" data-v="6" aria-label="填 6"><b>6</b><img src="img/6.png" alt="" aria-hidden="true" draggable="false"><i>9</i></button>
+    <button class="key" data-v="7" aria-label="填 7"><b>7</b><img src="img/7.png" alt="" aria-hidden="true" draggable="false"><i>9</i></button>
+    <button class="key" data-v="8" aria-label="填 8"><b>8</b><img src="img/8.png" alt="" aria-hidden="true" draggable="false"><i>9</i></button>
+    <button class="key" data-v="9" aria-label="填 9"><b>9</b><img src="img/9.png" alt="" aria-hidden="true" draggable="false"><i>9</i></button>
+    <button class="key erase" id="btnErase" data-v="0" aria-label="擦除">
+      <svg viewBox="0 0 24 24">
+        <path d="M8.9 5.6h9.6A1.5 1.5 0 0 1 20 7.1v9.8a1.5 1.5 0 0 1-1.5 1.5H8.9L3.6 12z"/>
+        <path d="M12.4 9.6l4.9 4.8M17.3 9.6l-4.9 4.8"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ========== 元素 ========== */
+  const canvas    = document.getElementById('game');
+  const ctx       = canvas.getContext('2d');
+  const boardWrap = document.getElementById('boardWrap');
+  const overlay   = document.getElementById('overlay');
+  const cardEl    = document.getElementById('overlayCard');
+  const timerEl   = document.getElementById('timer');
+  const blanksEl  = document.getElementById('blanks');
+  const lvNameEl  = document.getElementById('lvName');
+  const bestEl    = document.getElementById('best');
+  const btnBack   = document.getElementById('btnBack');
+  const btnUndo   = document.getElementById('btnUndo');
+  const btnNote   = document.getElementById('btnNote');
+  const btnReset  = document.getElementById('btnReset');
+  const btnLevel  = document.getElementById('btnLevel');
+  const btnErase  = document.getElementById('btnErase');
+  const toastEl   = document.getElementById('toast');
+  const padEl     = document.getElementById('pad');
+  const digitEls  = [].slice.call(padEl.querySelectorAll('.key[data-v]:not(.erase)'));
+  const countEls  = digitEls.map(function (b) { return b.querySelector('i'); });
+
+  /* ========== 常量 ========== */
+  const LEVELS = {
+    easy:   { label: '简单', clues: 46 },
+    medium: { label: '中等', clues: 34 },
+    hard:   { label: '困难', clues: 26 }
+  };
+  const LEVEL_ORDER = ['easy', 'medium', 'hard'];
+  const FILL_MS    = 150;      // 落子缩放动画
+  const OVER_LOCK  = 600;      // 结算后多久才允许点棋盘重开
+  const OVER_DELAY = 420;      // 结算卡片延迟出现，先让玩家看一眼填满的盘面
+  const UNDO_MAX   = 200;
+  const BOARD_RAD  = 18;
+  const STORE_KEY  = 'sudoku_best_v1';
+  const FONT       = '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif';
+
+  /* ===== 数字贴图（想换图 / 换回矢量数字，改这一段就够了）=====
+     素材：透明底 PNG、121×149、角色上下基本顶格，命名 img/1.png … img/9.png。
+     按「高 = 格子边长 × DIGIT_RATIO」等比缩放后以格心居中绘制。
+     任何一张加载失败（或尺寸为 0）→ 那一张自动退回内置矢量数字，不报错也不白屏。
+     候选数（笔记）始终画矢量小字：那种大小贴图糊成一团，认不出来。 */
+  const DIGIT_DIR   = 'img/';
+  const DIGIT_EXT   = '.png';
+  const DIGIT_RATIO = 0.80;
+
+  /* 值 1~9 的位掩码：BIT[v] = 1<<(v-1)，候选数 / 笔记一律用位存 */
+  const BIT = [0, 1, 2, 4, 8, 16, 32, 64, 128, 256];
+  const BITV = {};
+  for (let v = 1; v <= 9; v++) BITV[BIT[v]] = v;
+
+  /* 每个格子的宫号 */
+  const BOX_OF = new Int8Array(81);
+  for (let i = 0; i < 81; i++) {
+    BOX_OF[i] = (((i / 9) | 0) / 3 | 0) * 3 + ((i % 9) / 3 | 0);
+  }
+  /* 每个格子的 20 个「关联格」（同行 + 同列 + 同宫） */
+  const PEERS = [];
+  for (let i = 0; i < 81; i++) {
+    const r = (i / 9) | 0, c = i % 9;
+    const set = {};
+    for (let k = 0; k < 9; k++) { set[r * 9 + k] = 1; set[k * 9 + c] = 1; }
+    const br = (r / 3 | 0) * 3, bc = (c / 3 | 0) * 3;
+    for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) set[(br + a) * 9 + bc + b] = 1;
+    delete set[i];
+    PEERS.push(Object.keys(set).map(Number));
+  }
+  /* 27 个「单元」（9 行 + 9 列 + 9 宫），冲突判定与测试共用 */
+  const UNITS = [];
+  for (let r = 0; r < 9; r++) { const u = []; for (let c = 0; c < 9; c++) u.push(r * 9 + c); UNITS.push(u); }
+  for (let c = 0; c < 9; c++) { const u = []; for (let r = 0; r < 9; r++) u.push(r * 9 + c); UNITS.push(u); }
+  for (let b = 0; b < 9; b++) {
+    const u = [], br = (b / 3 | 0) * 3, bc = (b % 3) * 3;
+    for (let a = 0; a < 3; a++) for (let d = 0; d < 3; d++) u.push((br + a) * 9 + bc + d);
+    UNITS.push(u);
+  }
+
+  /* ========== 状态 ========== */
+  let level    = 'easy';
+  let sol      = new Int8Array(81);   // 完整解
+  let puz      = new Int8Array(81);   // 题目（0 = 空，非 0 = 题目给的数字）
+  let val      = new Int8Array(81);   // 当前盘面
+  let notes    = new Int32Array(81);  // 候选数位掩码
+  let bad      = new Uint8Array(81);  // 与同行列宫冲突
+  let fillAt   = new Float64Array(81);// 落子时间戳（缩放动画用）
+  let sel      = -1;                  // 选中格，-1 = 未选
+  let noteMode = false;
+  let state    = 'ready';             // ready | running | paused | over
+  let won      = false;
+  let overAt   = 0;
+  let overTimer = null;
+  let undoStack = [];
+  let filled = 0, badCount = 0;
+  let digitCount = new Int8Array(10);
+  let elapsed = 0, lastTick = 0, lastSecs = -1;
+
+  let side = 378, cell = 42, dpr = 1;
+  let sizeCss = { w: 378, h: 378 };
+  let dirty = true, animUntil = 0;
+
+  /* 数字贴图状态：digitImg[1..9] = { ready, el }；没就绪就画矢量数字 */
+  const digitImg = new Array(10);
+  for (let v = 1; v <= 9; v++) digitImg[v] = { ready: false, el: null };
+
+  let bests = {};
+  try { bests = JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; } catch (e) { bests = {}; }
+
+  /* ========== 小工具 ========== */
+  function clamp01(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function fmt(ms) {
+    const t = Math.floor(ms / 1000);
+    return pad2(Math.floor(t / 60)) + ':' + pad2(t % 60);
+  }
+  function fmtBest(s) {
+    if (s == null) return '--';
+    return s < 60 ? s + 's' : Math.floor(s / 60) + ':' + pad2(s % 60);
+  }
+  function popcount(x) { let n = 0; while (x) { x &= x - 1; n++; } return n; }
+  function shuffled(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+  function rrect(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function mark(animMs) {
+    dirty = true;
+    if (animMs) animUntil = Math.max(animUntil, performance.now() + animMs);
+  }
+  function vibrate(ms) {
+    try { if (navigator.vibrate) navigator.vibrate(ms || 16); } catch (e) {}
+  }
+
+  /* ============================================================
+     一、出题：随机终盘 → 挖洞，每挖一个都要验证「解唯一」
+     ============================================================ */
+
+  /* 数解个数，最多数到 limit 就停（1 = 唯一解） */
+  function countSolutions(puzGrid, limit) {
+    const g = Int8Array.from(puzGrid);
+    const row = new Int32Array(9), col = new Int32Array(9), box = new Int32Array(9);
+    for (let i = 0; i < 81; i++) {
+      const v = g[i];
+      if (v) { const b = BIT[v]; row[i / 9 | 0] |= b; col[i % 9] |= b; box[BOX_OF[i]] |= b; }
+    }
+    let found = 0;
+
+    function rec() {
+      if (found >= limit) return;
+      /* 最少候选优先（MRV）：先把最窄的格子定了，剪枝效果最好 */
+      let best = -1, mask = 0, bestN = 10;
+      for (let i = 0; i < 81; i++) {
+        if (g[i]) continue;
+        const cand = ~(row[i / 9 | 0] | col[i % 9] | box[BOX_OF[i]]) & 0x1FF;
+        const n = popcount(cand);
+        if (n === 0) return;                       // 死路
+        if (n < bestN) { bestN = n; best = i; mask = cand; if (n === 1) break; }
+      }
+      if (best < 0) { found++; return; }           // 填满了
+
+      const r = best / 9 | 0, c = best % 9, bx = BOX_OF[best];
+      for (let v = 1; v <= 9; v++) {
+        const b = BIT[v];
+        if (!(mask & b)) continue;
+        g[best] = v; row[r] |= b; col[c] |= b; box[bx] |= b;
+        rec();
+        g[best] = 0; row[r] ^= b; col[c] ^= b; box[bx] ^= b;
+        if (found >= limit) return;
+      }
+    }
+    rec();
+    return found;
+  }
+
+  /* 随机生成一个合法终盘 */
+  function makeFull() {
+    const g = new Int8Array(81);
+    const row = new Int32Array(9), col = new Int32Array(9), box = new Int32Array(9);
+    const r = new Int8Array(81), c = new Int8Array(81), b = new Int8Array(81);
+    for (let i = 0; i < 81; i++) { r[i] = i / 9 | 0; c[i] = i % 9; b[i] = BOX_OF[i]; }
+
+    function rec(i) {
+      if (i === 81) return true;
+      const used = row[r[i]] | col[c[i]] | box[b[i]];
+      let cand = ~used & 0x1FF;
+      const list = [];
+      while (cand) { const bit = cand & -cand; cand ^= bit; list.push(bit); }
+      shuffled(list);
+      for (let k = 0; k < list.length; k++) {
+        const bit = list[k];
+        g[i] = BITV[bit]; row[r[i]] |= bit; col[c[i]] |= bit; box[b[i]] |= bit;
+        if (rec(i + 1)) return true;
+        g[i] = 0; row[r[i]] ^= bit; col[c[i]] ^= bit; box[b[i]] ^= bit;
+      }
+      return false;
+    }
+    rec(0);
+    return g;
+  }
+
+  /* 挖洞：从终盘随机挑格子清空，清完仍「唯一解」才保留；
+     两轮都没挖到目标残格数就收手（够难了，不必硬挖）。 */
+  function makePuzzle(targetClues) {
+    const solution = makeFull();
+    const puzzle = Int8Array.from(solution);
+    let clues = 81;
+    for (let pass = 0; pass < 2 && clues > targetClues; pass++) {
+      const order = shuffled(Array.from({ length: 81 }, function (_, i) { return i; }));
+      for (let k = 0; k < order.length && clues > targetClues; k++) {
+        const i = order[k];
+        if (!puzzle[i]) continue;
+        const keep = puzzle[i];
+        puzzle[i] = 0;
+        if (countSolutions(puzzle, 2) === 1) clues--;
+        else puzzle[i] = keep;
+      }
+    }
+    return { sol: solution, puz: puzzle, clues: clues };
+  }
+
+  /* ============================================================
+     二、盘面逻辑
+     ============================================================ */
+
+  /* 冲突：只标「与同行 / 同列 / 同宫重复」的格子（不跟答案比，不算作弊） */
+  function computeBad() {
+    bad.fill(0);
+    badCount = 0;
+    for (let u = 0; u < UNITS.length; u++) {
+      const unit = UNITS[u];
+      const seen = new Int8Array(10);
+      for (let k = 0; k < 9; k++) { const v = val[unit[k]]; if (v) seen[v]++; }
+      for (let k = 0; k < 9; k++) {
+        const i = unit[k], v = val[i];
+        if (v && seen[v] > 1 && !bad[i]) { bad[i] = 1; badCount++; }
+      }
+    }
+  }
+
+  function refreshStats() {
+    filled = 0;
+    digitCount.fill(0);
+    for (let i = 0; i < 81; i++) { const v = val[i]; if (v) { filled++; digitCount[v]++; } }
+    blanksEl.textContent = String(81 - filled);
+    for (let k = 0; k < 9; k++) {
+      const left = 9 - digitCount[k + 1];
+      countEls[k].textContent = String(left);
+      digitEls[k].classList.toggle('done', left <= 0);
+      digitEls[k].classList.toggle('sel', sel >= 0 && val[sel] === k + 1);
+    }
+    bestEl.textContent = fmtBest(bests[level]);
+    btnUndo.disabled = undoStack.length === 0;
+  }
+
+  function pushUndo() {
+    undoStack.push({ val: Int8Array.from(val), notes: Int32Array.from(notes), sel: sel });
+    if (undoStack.length > UNDO_MAX) undoStack.shift();
+  }
+
+  function afterChange() {
+    computeBad();
+    refreshStats();
+    mark(FILL_MS + 60);
+  }
+
+  /* 落子 / 擦除 / 记笔记 */
+  function setValue(v) {
+    if (state !== 'running') return false;
+    if (sel < 0) { toast('先点一个格子'); return false; }
+    if (puz[sel]) { toast('题目里的数字不能改'); return false; }
+
+    if (noteMode && v > 0) {
+      if (val[sel]) { toast('这个格子已经有数字了'); return false; }
+      pushUndo();
+      notes[sel] ^= BIT[v];
+      fillAt[sel] = performance.now();
+      afterChange();
+      return true;
+    }
+    if (v === 0) {
+      if (!val[sel] && !notes[sel]) return false;      // 本来就是空的，不值得记一步撤销
+    } else if (val[sel] === v) {
+      return false;
+    }
+
+    pushUndo();
+    val[sel] = v;
+    notes[sel] = 0;
+    if (v > 0) {
+      const ps = PEERS[sel];
+      for (let k = 0; k < ps.length; k++) notes[ps[k]] &= ~BIT[v];   // 顺手清掉关联格的这个候选数
+    }
+    fillAt[sel] = performance.now();
+    vibrate();
+    afterChange();
+    if (filled === 81 && badCount === 0) winGame();
+    return true;
+  }
+
+  function undo() {
+    if (state !== 'running') return false;
+    if (!undoStack.length) { toast('没有可撤销的步骤'); return false; }
+    const s = undoStack.pop();
+    val = s.val; notes = s.notes; sel = s.sel;
+    fillAt.fill(0);
+    afterChange();
+    return true;
+  }
+
+  /* ========== 局面流程 ========== */
+  function newGame() {
+    clearTimeout(overTimer);
+    const g = makePuzzle(LEVELS[level].clues);
+    sol = g.sol;
+    puz = g.puz;
+    val = Int8Array.from(puz);
+    notes = new Int32Array(81);
+    bad = new Uint8Array(81);
+    fillAt = new Float64Array(81);
+    sel = -1;
+    noteMode = false;
+    btnNote.classList.remove('on');
+    undoStack = [];
+    state = 'ready'; won = false; overAt = 0;
+    elapsed = 0; lastTick = 0; lastSecs = -1;
+    timerEl.textContent = '00:00';
+    lvNameEl.textContent = LEVELS[level].label;
+    computeBad();
+    refreshStats();
+    showOverlay('ready');
+    mark();
+  }
+
+  function start() {
+    if (state !== 'ready' && state !== 'paused') return;
+    state = 'running';
+    lastTick = performance.now();
+    hideOverlay();
+    mark();
+  }
+
+  function pause() {
+    if (state !== 'running') return;
+    state = 'paused';
+    showOverlay('paused');
+    mark();
+  }
+
+  function winGame() {
+    state = 'over'; won = true; overAt = performance.now();
+    const secs = Math.floor(elapsed / 1000);
+    let isBest = false;
+    if (bests[level] == null || secs < bests[level]) {
+      bests[level] = secs;
+      isBest = true;
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(bests)); } catch (e) {}
+    }
+    refreshStats();
+    mark();
+    overTimer = setTimeout(function () { showOverlay('win', isBest); }, OVER_DELAY);
+  }
+
+  function restart() { newGame(); resize(); start(); }
+
+  function setLevel(k, silent) {
+    if (!LEVELS[k] || k === level) return;
+    level = k;
+    newGame();
+    resize();
+    if (!silent) toast(LEVELS[k].label + '：' + clueCount() + ' 个已知数');
+  }
+
+  /* 当前题目的已知数个数（挖洞不总能挖到目标，提示里报真实值） */
+  function clueCount() {
+    let n = 0;
+    for (let i = 0; i < 81; i++) if (puz[i]) n++;
+    return n;
+  }
+
+  /* ========== 棋盘尺寸 / 坐标映射 ========== */
+  function resize() {
+    const rect = boardWrap.getBoundingClientRect();
+    const availW = Math.max(90, Math.floor(rect.width) - 2);
+    const availH = Math.max(90, Math.floor(rect.height) - 2);
+    side = Math.min(availW, availH);
+    cell = side / 9;
+
+    sizeCss = { w: side, h: side };
+    dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    canvas.style.width  = side + 'px';
+    canvas.style.height = side + 'px';
+    canvas.width  = Math.round(side * dpr);
+    canvas.height = Math.round(side * dpr);
+
+    mark();
+    render(performance.now());
+  }
+
+  if (window.ResizeObserver) {
+    new ResizeObserver(resize).observe(boardWrap);
+  } else {
+    window.addEventListener('resize', resize);
+  }
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 250); });
+
+  /* 格 → 画板内的像素矩形（绘制与点击反算共用这一处） */
+  function cellRect(i) {
+    return { x: (i % 9) * cell, y: ((i / 9) | 0) * cell, w: cell, h: cell };
+  }
+  /* 画板内像素坐标 → 格号；出界返回 -1 */
+  function cellAt(x, y) {
+    const c = Math.floor(x / cell), r = Math.floor(y / cell);
+    if (r < 0 || c < 0 || r > 8 || c > 8) return -1;
+    return r * 9 + c;
+  }
+  /* 客户端坐标 → 格号（含画板缩放换算） */
+  function cellAtClient(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const kx = rect.width  ? sizeCss.w / rect.width  : 1;
+    const ky = rect.height ? sizeCss.h / rect.height : 1;
+    return cellAt((clientX - rect.left) * kx, (clientY - rect.top) * ky);
+  }
+
+  /* ========== 渲染 ========== */
+  function drawNotes(i) {
+    const x = (i % 9) * cell, y = ((i / 9) | 0) * cell, w = cell / 3;
+    ctx.font = '700 ' + Math.round(cell * 0.23) + 'px ' + FONT;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#9db3a8';
+    const m = notes[i];
+    for (let k = 0; k < 9; k++) {
+      if (m & BIT[k + 1]) {
+        ctx.fillText(String(k + 1), x + (k % 3 + 0.5) * w, y + ((k / 3 | 0) + 0.5) * w + cell * 0.012);
+      }
+    }
+  }
+
+  /* ========== 数字贴图加载 ========== */
+  function loadDigitImage(v) {
+    if (typeof Image === 'undefined') return;
+    const el = new Image();
+    el.onload = function () {
+      if (!el.naturalWidth || !el.naturalHeight) {         // 尺寸异常也当失败
+        digitImg[v].el = null;
+        digitImg[v].ready = false;
+        mark();
+        return;
+      }
+      digitImg[v].el = el;
+      digitImg[v].ready = true;
+      mark();
+      render(performance.now());
+    };
+    el.onerror = function () {
+      digitImg[v].ready = false;
+      digitImg[v].el = null;
+      mark();
+    };
+    el.src = DIGIT_DIR + v + DIGIT_EXT;
+  }
+  function loadDigitImages() { for (let v = 1; v <= 9; v++) loadDigitImage(v); }
+
+  /* 键盘上的贴图：加载成功就把下面垫着的矢量数字藏起来；
+     失败（或图不存在）就把 <img> 摘掉，露出矢量数字 —— 不会出现破图 */
+  function bindPadImages() {
+    [].slice.call(padEl.querySelectorAll('.key img')).forEach(function (im) {
+      function onOk() {
+        const b = im.parentNode ? im.parentNode.querySelector('b') : null;
+        if (b) b.style.display = 'none';
+      }
+      function onFail() { if (im.parentNode) im.parentNode.removeChild(im); }
+      if (im.complete) {                       // 可能已经加载完了，别漏事件
+        if (im.naturalWidth) onOk(); else onFail();
+      } else {
+        im.addEventListener('load', onOk);
+        im.addEventListener('error', onFail);
+      }
+    });
+  }
+
+  /* 一个数字：贴图就绪就用贴图（等比、格心居中，不参与任何判定），否则画矢量数字 */
+  function drawDigit(v, cx, cy, sc, isBad, isGiven) {
+    const img = digitImg[v];
+    if (img && img.ready && img.el && img.el.naturalWidth) {
+      const h = cell * DIGIT_RATIO;
+      const w = h * (img.el.naturalWidth / img.el.naturalHeight);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(sc, sc);
+      ctx.drawImage(img.el, -w / 2, -h / 2, w, h);
+      ctx.restore();
+      return true;
+    }
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(sc, sc);
+    ctx.font = '800 ' + Math.round(cell * 0.56) + 'px ' + FONT;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = isBad ? '#d6455e' : (isGiven ? '#1c2b23' : '#1a9c63');
+    ctx.fillText(String(v), 0, cell * 0.02);
+    ctx.restore();
+    return false;
+  }
+
+  function render(now) {
+    const S = sizeCss.w;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.clearRect(0, 0, S, S);
+
+    ctx.save();
+    rrect(0, 0, S, S, BOARD_RAD);
+    ctx.clip();
+
+    /* 盘底 */
+    ctx.fillStyle = '#f2f8f4';
+    ctx.fillRect(0, 0, S, S);
+
+    /* 3×3 宫底纹（棋盘格），一眼看清宫在哪 */
+    ctx.fillStyle = 'rgba(28,70,52,.035)';
+    for (let br = 0; br < 3; br++) {
+      for (let bc = 0; bc < 3; bc++) {
+        if ((br + bc) % 2 === 1) ctx.fillRect(bc * 3 * cell, br * 3 * cell, 3 * cell, 3 * cell);
+      }
+    }
+
+    /* 高亮：关联格 → 自己填的 → 同数字 → 冲突 → 选中格
+       「自己填的」用淡绿底 + 底部一道短杠标出来（贴图本身没法改色，
+       所以用标记而不是换色来区分「题目给的」和「我填的」） */
+    const selV = sel >= 0 ? val[sel] : 0;
+    const sr = sel >= 0 ? (sel / 9 | 0) : -1, sc = sel >= 0 ? sel % 9 : -1;
+    const selBox = sel >= 0 ? BOX_OF[sel] : -1;
+    for (let i = 0; i < 81; i++) {
+      const mine = val[i] && !puz[i];
+      let bg = null;
+      if (sel >= 0 && ((i / 9 | 0) === sr || i % 9 === sc || BOX_OF[i] === selBox)) bg = 'rgba(26,156,99,.07)';
+      if (mine) bg = 'rgba(26,156,99,.14)';
+      if (selV && val[i] === selV) bg = 'rgba(74,151,224,.18)';
+      if (bad[i]) bg = 'rgba(214,69,94,.16)';
+      if (i === sel) bg = 'rgba(26,156,99,.15)';
+      const bx = (i % 9) * cell, by = ((i / 9) | 0) * cell;
+      if (bg) {
+        ctx.fillStyle = bg;
+        ctx.fillRect(bx, by, cell, cell);
+      }
+      if (mine) {
+        ctx.fillStyle = 'rgba(26,156,99,.55)';
+        ctx.fillRect(bx + cell * 0.31, by + cell * 0.9, cell * 0.38, Math.max(2, cell * 0.05));
+      }
+    }
+
+    /* 格线：细线 1px，宫界 2px */
+    ctx.fillStyle = 'rgba(28,70,52,.10)';
+    for (let k = 1; k < 9; k++) {
+      if (k % 3 === 0) continue;
+      const x = Math.round(k * cell);
+      ctx.fillRect(x - 0.5, 0, 1, S);
+      ctx.fillRect(0, x - 0.5, S, 1);
+    }
+    ctx.fillStyle = 'rgba(28,70,52,.28)';
+    for (let k = 3; k < 9; k += 3) {
+      const x = Math.round(k * cell);
+      ctx.fillRect(x - 1, 0, 2, S);
+      ctx.fillRect(0, x - 1, S, 2);
+    }
+
+    /* 数字 / 候选数 */
+    for (let i = 0; i < 81; i++) {
+      const v = val[i];
+      const cx = (i % 9) * cell + cell / 2, cy = ((i / 9) | 0) * cell + cell / 2;
+      if (!v) { if (notes[i]) drawNotes(i); continue; }
+
+      let k = fillAt[i] ? clamp01((now - fillAt[i]) / FILL_MS) : 1;
+      k = 1 - (1 - k) * (1 - k);                        // easeOutQuad
+      drawDigit(v, cx, cy, 0.74 + 0.26 * k, bad[i], puz[i]);
+    }
+
+    /* 选中框 */
+    if (sel >= 0) {
+      ctx.strokeStyle = '#1a9c63';
+      ctx.lineWidth = 2;
+      rrect((sel % 9) * cell + 1, ((sel / 9) | 0) * cell + 1, cell - 2, cell - 2, 7);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    /* 外框 */
+    rrect(0.5, 0.5, S - 1, S - 1, BOARD_RAD);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(28,70,52,.10)';
+    ctx.stroke();
+  }
+
+  /* ========== 主循环 ========== */
+  function loop(now) {
+    requestAnimationFrame(loop);
+
+    if (state === 'running') {
+      const dt = Math.max(0, Math.min(now - lastTick, 200));
+      lastTick = now;
+      elapsed += dt;
+      const s = Math.floor(elapsed / 1000);
+      if (s !== lastSecs) { lastSecs = s; timerEl.textContent = fmt(elapsed); }
+    } else {
+      lastTick = now;
+    }
+
+    if (dirty || now < animUntil) {
+      dirty = false;
+      render(now);
+    }
+  }
+
+  /* ========== 遮罩层 ========== */
+  function levelPills(active) {
+    let h = '<div class="c-levels">';
+    for (let i = 0; i < LEVEL_ORDER.length; i++) {
+      const k = LEVEL_ORDER[i];
+      h += '<button data-level="' + k + '" class="' + (k === active ? 'active' : '') + '">' + LEVELS[k].label + '</button>';
+    }
+    return h + '</div>';
+  }
+
+  function showOverlay(type, isBest) {
+    let html = '';
+    if (type === 'ready') {
+      html = '<div class="c-title">开始数独</div>' +
+             '<div class="c-desc">每行、每列、每个 <b>3×3 宫</b><br>' +
+             '都要把 1-9 填满，不能重复<br>' +
+             '先点空格，再点下面的数字<br>' +
+             '顶栏铅笔可以记候选数</div>' +
+             levelPills(level) +
+             '<button class="c-btn" id="startBtn">开始</button>';
+    } else if (type === 'paused') {
+      html = '<div class="c-title">已暂停</div>' +
+             '<div class="c-desc">点一下棋盘继续</div>';
+    } else if (type === 'win') {
+      html = (isBest ? '<div class="badge">新纪录</div>' : '') +
+             '<div class="c-title">全部填对了</div>' +
+             '<div class="c-desc">用时 <b>' + fmt(elapsed) + '</b><br>' +
+             LEVELS[level].label + ' · ' + clueCount() + ' 个已知数<br>' +
+             '本档最佳 <span class="orange">' + fmtBest(bests[level]) + '</span></div>' +
+             levelPills(level) +
+             '<button class="c-btn" id="againBtn">再来一局</button>';
+    }
+    cardEl.innerHTML = html;
+    overlay.classList.add('show');
+
+    const again = document.getElementById('againBtn');
+    if (again) again.addEventListener('click', function (e) { e.stopPropagation(); restart(); });
+    const startBtn = document.getElementById('startBtn');
+    if (startBtn) startBtn.addEventListener('click', function (e) { e.stopPropagation(); start(); });
+    [].slice.call(cardEl.querySelectorAll('.c-levels button')).forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (b.dataset.level !== level) setLevel(b.dataset.level);
+      });
+    });
+  }
+  function hideOverlay() { overlay.classList.remove('show'); }
+
+  /* ========== 输入 ========== */
+  canvas.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+
+    if (state === 'over') {
+      if (performance.now() - overAt > OVER_LOCK) restart();
+      return;
+    }
+    if (state === 'ready' || state === 'paused') start();
+    if (state !== 'running') return;
+
+    const i = cellAtClient(e.clientX, e.clientY);
+    if (i < 0) return;
+    sel = i;
+    refreshStats();
+    mark();
+  }, { passive: false });
+
+  canvas.addEventListener('click', function () {
+    if (state === 'ready' || state === 'paused') start();
+  });
+
+  function onDigitKey(v) {
+    if (state === 'over') return;
+    if (state === 'ready' || state === 'paused') start();
+    setValue(v);
+  }
+
+  digitEls.forEach(function (b) {
+    b.addEventListener('pointerdown', function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      onDigitKey(Number(b.dataset.v));
+    }, { passive: false });
+  });
+
+  btnErase.addEventListener('pointerdown', function (e) {
+    e.stopPropagation();
+    e.preventDefault();
+    onDigitKey(0);
+  }, { passive: false });
+
+  window.addEventListener('keydown', function (e) {
+    const k = e.key;
+    if (state === 'over') {
+      if (k === ' ' || k === 'Enter') {
+        e.preventDefault();
+        if (performance.now() - overAt > OVER_LOCK) restart();
+      }
+      return;
+    }
+    if (state === 'ready' || state === 'paused') {
+      if (k === 'Escape' && state === 'paused') { e.preventDefault(); start(); return; }
+    }
+
+    let r = sel < 0 ? 4 : (sel / 9 | 0), c = sel < 0 ? 4 : sel % 9, moved = false;
+    if (k === 'ArrowUp'    || k === 'w' || k === 'W') { r = Math.max(0, r - 1); moved = true; }
+    if (k === 'ArrowDown'  || k === 's' || k === 'S') { r = Math.min(8, r + 1); moved = true; }
+    if (k === 'ArrowLeft'  || k === 'a' || k === 'A') { c = Math.max(0, c - 1); moved = true; }
+    if (k === 'ArrowRight' || k === 'd' || k === 'D') { c = Math.min(8, c + 1); moved = true; }
+    if (moved) {
+      e.preventDefault();
+      if (state !== 'running') start();
+      sel = r * 9 + c;
+      refreshStats();
+      mark();
+      return;
+    }
+    if (k >= '1' && k <= '9') {
+      e.preventDefault();
+      if (state !== 'running') start();
+      setValue(Number(k));
+      return;
+    }
+    if (k === 'Backspace' || k === 'Delete' || k === '0') {
+      e.preventDefault();
+      if (state !== 'running') start();
+      setValue(0);
+      return;
+    }
+    if (k === 'n' || k === 'N') { e.preventDefault(); toggleNote(); return; }
+    if (k === 'z' || k === 'Z' || k === 'u' || k === 'U') { e.preventDefault(); undo(); return; }
+    if (k === 'r' || k === 'R') { e.preventDefault(); newGame(); resize(); toast('已重置'); return; }
+    if (k === 'Escape' && state === 'running') pause();
+  });
+
+  function toggleNote() {
+    noteMode = !noteMode;
+    btnNote.classList.toggle('on', noteMode);
+    toast(noteMode ? '笔记模式：点数字记候选数' : '填数模式');
+  }
+
+  btnNote.addEventListener('click', function (e) { e.stopPropagation(); toggleNote(); });
+  btnUndo.addEventListener('click', function (e) { e.stopPropagation(); if (state === 'running') undo(); });
+  btnReset.addEventListener('click', function (e) {
+    e.stopPropagation();
+    newGame();
+    resize();
+    toast('已重置');
+  });
+  btnBack.addEventListener('click', function (e) {
+    e.stopPropagation();
+    window.location.href = '../index.html';
+  });
+  btnLevel.addEventListener('click', function (e) {
+    e.stopPropagation();
+    const nxt = LEVEL_ORDER[(LEVEL_ORDER.indexOf(level) + 1) % LEVEL_ORDER.length];
+    setLevel(nxt);
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && state === 'running') pause();
+  });
+
+  /* ========== 轻提示 ========== */
+  let toastTimer = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1400);
+  }
+
+  /* ========== 启动 ========== */
+  newGame();
+  resize();
+  loadDigitImages();
+  bindPadImages();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

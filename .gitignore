@@ -1,9 +1,8 @@
 # WorkBuddy 项目数据（仅本地）
 .workbuddy/
 
-# 开发期临时 / 验证脚本
-.check.js
-.t.js
+# 开发期临时 / 验证脚本：点号开头的 js（自测脚本，非游戏运行时资源）
+.*.js
 
 # 系统垃圾文件
 Thumbs.db

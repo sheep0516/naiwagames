@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#eef3f0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>奶蛙翻翻乐</title>
+<style>
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: #1c2b23;
+    background: radial-gradient(120% 80% at 50% 0%, #f7fbf8 0%, #e7efe9 100%);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  .app {
+    --app-w: 402px;              /* 版心宽度：固定值，屏幕再宽也不拉伸 */
+    width: var(--app-w);
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0 auto;
+    padding: calc(6px + env(safe-area-inset-top)) 12px calc(8px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ---------- 顶部菜单栏 ---------- */
+  .topbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+  }
+
+  .topbar .right {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid #dde8e1;
+    border-radius: 13px;
+    background: #ffffff;
+    color: #2f4a3c;
+    box-shadow: 0 2px 6px rgba(31, 74, 55, 0.06);
+    transition: transform .08s ease, background .15s ease;
+    cursor: pointer;
+  }
+  .icon-btn:active { transform: scale(0.92); background: #f1f6f3; }
+  .icon-btn > span { display: flex; align-items: center; justify-content: center; }
+  .icon-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor;
+                  stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn .fill-icon { fill: currentColor; stroke: none; }
+
+  .timer {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    font-variant-numeric: tabular-nums;
+    color: #24463a;
+    padding: 4px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .72);
+  }
+
+  /* ---------- 数据区 ---------- */
+  .scores {
+    flex: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .score-card {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+  }
+  .score-card.mid { justify-content: center; }
+  .score-card.end { justify-content: flex-end; }
+  .score-card .label {
+    font-size: 12.5px;
+    color: #7b9187;
+    white-space: nowrap;
+  }
+  .score-card .value {
+    font-size: 20px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #1a9c63;
+    line-height: 1.05;
+  }
+  .score-card .value.best { color: #ef7a35; }
+  .score-card .value.steps { color: #4a97e0; }
+
+  /* ---------- 游戏窗口 ---------- */
+  .board-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #game {
+    display: block;
+    border-radius: 18px;
+    background: #e9efeb;
+    box-shadow: 0 8px 24px rgba(28, 70, 52, .10), 0 0 0 1px rgba(28, 70, 52, .06);
+    touch-action: none;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .18s ease;
+  }
+  .overlay.show { opacity: 1; }
+  .overlay.show .card { pointer-events: auto; }
+  .overlay .card {
+    max-width: 86%;
+    padding: 20px 26px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 10px 30px rgba(24, 60, 44, .16);
+    text-align: center;
+  }
+  .overlay .c-title { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+  .overlay .c-desc { font-size: 13.5px; line-height: 1.7; color: #6c8378; }
+  .overlay .c-desc b { color: #1a9c63; font-size: 16px; }
+  .overlay .c-desc .orange { color: #ef7a35; }
+  .overlay .c-desc .tip { display: block; margin-top: 6px; font-size: 12.5px; color: #7b9187; }
+  .overlay .badge {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #ffa63d, #f2691f);
+  }
+  .overlay .c-btn {
+    margin-top: 14px;
+    padding: 10px 26px;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #26b878, #149b60);
+    box-shadow: 0 6px 16px rgba(26, 156, 99, .28);
+    cursor: pointer;
+    transition: transform .08s ease;
+  }
+  .overlay .c-btn:active { transform: scale(0.95); }
+
+  /* ---------- 底部工具栏 ---------- */
+  .tools {
+    --th: clamp(48px, 8.6vh, 62px);
+    flex: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: min(100%, 380px);
+    margin: 2px auto 0;
+  }
+  .tools button {
+    height: var(--th);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 10px;
+    border: 1px solid #dbe6df;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff, #f3f8f5);
+    color: #2c6a4f;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 3px 8px rgba(31, 74, 55, .07);
+    transition: transform .07s ease, background .12s ease;
+    cursor: pointer;
+    touch-action: none;
+  }
+  .tools button:active {
+    transform: scale(0.94);
+    background: linear-gradient(180deg, #e9f5ee, #dcf0e5);
+  }
+  .tools button svg {
+    width: 20px; height: 20px; flex: none;
+    fill: none; stroke: currentColor;
+    stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .tools button span { white-space: nowrap; }
+
+  /* ---------- 提示 ---------- */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    transform: translate(-50%, 12px);
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    color: #fff;
+    background: rgba(30, 48, 40, .88);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease;
+    z-index: 99;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* 横屏矮屏只收窄按钮高度，版心宽度不随屏幕方向变化 */
+  @media (orientation: landscape) and (max-height: 520px) {
+    .tools { --th: 44px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 菜单栏 -->
+  <header class="topbar">
+    <div class="left">
+      <button class="icon-btn" id="btnBack" aria-label="返回">
+        <svg viewBox="0 0 24 24"><path d="M15 4.5 7.5 12 15 19.5"/></svg>
+      </button>
+    </div>
+    <div class="timer" id="timer">00:00</div>
+    <div class="right">
+      <button class="icon-btn" id="btnPause" aria-label="暂停">
+        <span id="pauseIcon">
+          <svg viewBox="0 0 24 24">
+            <rect class="fill-icon" x="6.5" y="5" width="3.6" height="14" rx="1.4"/>
+            <rect class="fill-icon" x="13.9" y="5" width="3.6" height="14" rx="1.4"/>
+          </svg>
+        </span>
+      </button>
+      <button class="icon-btn" id="btnReset" aria-label="重置">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 12a8 8 0 1 1-2.6-5.9"/>
+          <path d="M20 4.5V10h-5.2"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 数据 -->
+  <div class="scores">
+    <div class="score-card">
+      <span class="label">步数</span>
+      <span class="value steps" id="steps">0</span>
+    </div>
+    <div class="score-card mid">
+      <span class="label">得分</span>
+      <span class="value" id="score">0</span>
+    </div>
+    <div class="score-card end">
+      <span class="label">最高</span>
+      <span class="value best" id="best">0</span>
+    </div>
+  </div>
+
+  <!-- 游戏窗口 -->
+  <div class="board-wrap" id="boardWrap">
+    <canvas id="game"></canvas>
+    <div class="overlay" id="overlay">
+      <div class="card" id="overlayCard"></div>
+    </div>
+  </div>
+
+  <!-- 工具栏 -->
+  <div class="tools">
+    <button id="btnHint" aria-label="提示">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3a6 6 0 0 0-3.6 10.8c.5.4.8 1 .8 1.7v.6h5.6v-.6c0-.7.3-1.3.8-1.7A6 6 0 0 0 12 3z"/>
+        <path d="M10 19.2h4M10.7 21.5h2.6"/>
+      </svg>
+      <span>提示</span>
+    </button>
+    <button id="btnLevel" aria-label="切换难度">
+      <svg viewBox="0 0 24 24">
+        <rect x="3.5" y="3.5" width="7" height="7" rx="2.2"/>
+        <rect x="13.5" y="3.5" width="7" height="7" rx="2.2"/>
+        <rect x="3.5" y="13.5" width="7" height="7" rx="2.2"/>
+        <rect x="13.5" y="13.5" width="7" height="7" rx="2.2"/>
+      </svg>
+      <span id="levelLabel">难度 · 标准</span>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ========== 元素 ========== */
+  const canvas     = document.getElementById('game');
+  const ctx        = canvas.getContext('2d');
+  const boardWrap  = document.getElementById('boardWrap');
+  const overlay    = document.getElementById('overlay');
+  const ovCard     = document.getElementById('overlayCard');
+  const stepsEl    = document.getElementById('steps');
+  const scoreEl    = document.getElementById('score');
+  const bestEl     = document.getElementById('best');
+  const timerEl    = document.getElementById('timer');
+  const btnBack    = document.getElementById('btnBack');
+  const btnPause   = document.getElementById('btnPause');
+  const btnReset   = document.getElementById('btnReset');
+  const btnHint    = document.getElementById('btnHint');
+  const btnLevel   = document.getElementById('btnLevel');
+  const levelLabel = document.getElementById('levelLabel');
+  const pauseIcon  = document.getElementById('pauseIcon');
+  const toastEl    = document.getElementById('toast');
+
+  /* ========== 常量 ========== */
+  // 三档难度：卡片总数必须是偶数（成对发牌）
+  const LEVELS = [
+    { id: 'easy',   name: '简单', cols: 3, rows: 4 },   // 12 张 / 6 对
+    { id: 'normal', name: '标准', cols: 4, rows: 4 },   // 16 张 / 8 对
+    { id: 'hard',   name: '挑战', cols: 4, rows: 5 }    // 20 张 / 10 对
+  ];
+
+  const FLIP_DUR   = 240;   // 单张翻牌动画时长
+  const MISS_HOLD  = 700;   // 翻错后停留多久再盖回
+  const POP_DUR    = 320;   // 配对成功的弹跳
+  const SHAKE_DUR  = 340;   // 翻错的抖动
+  const HINT_DUR   = 1000;  // 提示时揭示甲板的时间
+  const BORN_DUR   = 300;   // 发牌淡入
+
+  const HINT_COST  = 60;    // 提示扣分
+  const PAIR_SCORE = 100;   // 配对基础分
+  const COMBO_STEP = 30;    // 连击每档加分
+  const EFF_UNIT   = 15;    // 通关效率奖励：每省下一步 ×15
+
+  const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif';
+
+  const STORE_BEST  = 'flip_best_score_v1';   // 按难度分别记最高分
+  const STORE_LEVEL = 'flip_level_v1';
+
+  /* ===== 自定义图片配置（想换成自己的图，改这一段就够了）===== */
+  const USE_IMAGES = true;               // false = 全部用内置矢量水果
+  const IMG_DIR    = 'img/';             // 图片目录（相对 index.html）
+  const IMG_EXTS   = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
+  const IMG_FIT    = 'contain';          // 'contain' 整张完整显示（推荐）/ 'cover' 裁切铺满
+
+  // 每种水果的名字 / 配色；矢量兜底图标按 key 绘制。
+  // 图片查找顺序：先按名字 → 再按编号，两套任选、可混用。
+  const TYPES = [
+    { key: 'orange',      name: '橙子',   color: '#e08420', light: '#fdeacd' },
+    { key: 'grape',       name: '葡萄',   color: '#7b54c8', light: '#eae0fb' },
+    { key: 'pomegranate', name: '石榴',   color: '#d6415f', light: '#fbdde3' },
+    { key: 'avocado',     name: '牛油果', color: '#5d9b3f', light: '#e2f1d6' },
+    { key: 'starfruit',   name: '杨桃',   color: '#dfae1c', light: '#fbf0cc' },
+    { key: 'pineapple',   name: '菠萝',   color: '#d99a1e', light: '#faedd0' },
+    { key: 'watermelon',  name: '西瓜',   color: '#3f9e57', light: '#dcf2e1' },
+    { key: 'strawberry',  name: '草莓',   color: '#e0334d', light: '#fbdade' },
+    { key: 'dragonfruit', name: '火龙果', color: '#cf3f86', light: '#fadbe9' },
+    { key: 'kiwi',        name: '猕猴桃', color: '#7ca83a', light: '#eaf3d5' }
+  ];
+
+  /* ========== 状态 ========== */
+  let lv        = LEVELS[1];   // 当前难度
+  let cols      = lv.cols;
+  let rows      = lv.rows;
+  let pairs     = cols * rows / 2;
+
+  let cards     = [];          // [{t, r, c, up, matched, f, ffrom, ft0, target, popAt}]
+  let state     = 'ready';     // ready | running | paused | over
+  let upturned  = [];          // 本轮已翻开的卡下标（配对成功即清空；翻错留到盖回）
+  let lockUntil = 0;           // 翻错后的操作锁
+  let steps     = 0;           // 步数 = 翻开的对数（每次两张记 1 步）
+  let score     = 0;
+  let combo     = 0;           // 当前连击
+  let bestCombo = 0;
+  let matchedPairs = 0;
+  let elapsed   = 0;
+  let lastTick  = 0;
+  let winBonus  = 0;
+  let newRecord = false;
+  let overAt    = 0;
+
+  let best      = loadBest();  // { easy: 0, normal: 0, hard: 0 }
+
+  let s = 60;                  // 单张卡片边长
+  let gap = 8;                 // 卡片之间的缝
+  let pad = 8;                 // 最外圈留白（= gap，用于抖动、描边不越界）
+  let cw = 300;                // 画板宽（逻辑像素）
+  let ch = 300;                // 画板高
+  let dpr = 1;
+  let bornAt = 0;
+
+  let shake  = null;           // {ids:[i,j], t0}
+  let reveal = null;           // {ids:[i,j], t0, until}
+  let pops   = [];             // [{x,y,text,color,t0}]
+  let cur    = { r: 0, c: 0, on: false };   // 键盘光标
+
+  const customImg = [];        // customImg[类型下标] = 已加载成功的 <img>
+
+  /* ========== 难度 / 存档 ========== */
+  function loadBest() {
+    try {
+      const o = JSON.parse(localStorage.getItem(STORE_BEST) || '{}');
+      return (o && typeof o === 'object') ? o : {};
+    } catch (e) { return {}; }
+  }
+  function bestOf() { return Number(best[lv.id] || 0) || 0; }
+  function saveBest(v) {
+    best[lv.id] = v;
+    try { localStorage.setItem(STORE_BEST, JSON.stringify(best)); } catch (e) {}
+  }
+  function loadLevel() {
+    let id = null;
+    try { id = localStorage.getItem(STORE_LEVEL); } catch (e) {}
+    for (let i = 0; i < LEVELS.length; i++) if (LEVELS[i].id === id) return LEVELS[i];
+    return LEVELS[1];
+  }
+
+  /* ========== 尺寸自适应 ========== */
+  // 画板尺寸 = 牌阵外框：宽高随 cols/rows 变化，始终塞进 .board-wrap
+  function layout() {
+    const rect = boardWrap.getBoundingClientRect();
+    const bw = Math.max(140, Math.floor(rect.width));
+    const bh = Math.max(140, Math.floor(rect.height));
+
+    const s0 = Math.min(bw / (cols + 1.3), bh / (rows + 1.3));
+    gap = Math.max(4, Math.round(s0 * 0.14));
+    pad = gap;
+
+    s = Math.min((bw - gap * (cols + 1)) / cols,
+                 (bh - gap * (rows + 1)) / rows);
+    s = Math.max(22, s);
+
+    cw = Math.round(cols * s + (cols + 1) * gap);
+    ch = Math.round(rows * s + (rows + 1) * gap);
+
+    dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    canvas.style.width  = cw + 'px';
+    canvas.style.height = ch + 'px';
+    canvas.width  = Math.round(cw * dpr);
+    canvas.height = Math.round(ch * dpr);
+  }
+
+  function resize() {
+    layout();
+    render(performance.now());
+  }
+
+  if (window.ResizeObserver) {
+    new ResizeObserver(resize).observe(boardWrap);
+  } else {
+    window.addEventListener('resize', resize);
+  }
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 250); });
+
+  /* ========== 自定义图片加载 ========== */
+  function imageCandidates(i) {
+    const t = TYPES[i] || {};
+    const names = [];
+    if (t.key) names.push(t.key);
+    names.push(String(i + 1));
+    const out = [], seen = {};
+    names.forEach(function (n) {
+      IMG_EXTS.forEach(function (ext) {
+        const p = IMG_DIR + n + '.' + ext;
+        if (!seen[p]) { seen[p] = 1; out.push(p); }
+      });
+    });
+    return out;
+  }
+  function tryLoad(list, k, i) {
+    if (k >= list.length) return;
+    const el = new Image();
+    el.onload = function () { customImg[i] = el; };
+    el.onerror = function () { tryLoad(list, k + 1, i); };
+    el.src = list[k];
+  }
+  function loadCustomImages() {
+    if (!USE_IMAGES) return;
+    for (let i = 0; i < TYPES.length; i++) tryLoad(imageCandidates(i), 0, i);
+  }
+
+  /* ========== 小工具 ========== */
+  function fmt(ms) {
+    const total = Math.floor(ms / 1000);
+    const m = String(Math.floor(total / 60)).padStart(2, '0');
+    const sec = String(total % 60).padStart(2, '0');
+    return m + ':' + sec;
+  }
+  function rgba(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  function rrect(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function shuffleArr(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function cardRadius(w) { return Math.min(18, w * 0.22); }
+  // 单张卡片的像素矩形（逻辑坐标）
+  function rectOf(i) {
+    const c = cards[i];
+    return { x: pad + c.c * (s + gap), y: pad + c.r * (s + gap), w: s, h: s };
+  }
+  // 翻牌进度 f（0 = 背面，1 = 正面）→ 横向缩放 + 此刻该画哪一面
+  // f 越过 0.5 的瞬间换面，|cos| 让牌在中间「转」成一条线
+  function flipState(f) {
+    return { front: f >= 0.5, sx: Math.max(0.02, Math.abs(Math.cos(Math.PI * f))) };
+  }
+  // 提示揭示：淡入 → 保持 → 淡出，平滑不闪；不适用返回 -1
+  function revealF(now, i) {
+    if (!reveal || (reveal.ids[0] !== i && reveal.ids[1] !== i)) return -1;
+    const inK = Math.min(1, Math.max(0, (now - reveal.t0) / FLIP_DUR));
+    const outK = Math.min(1, Math.max(0, (reveal.until - now) / FLIP_DUR));
+    return Math.min(inK, outK);
+  }
+  function shakeAmp() { return Math.min(s * 0.075, pad * 0.8); }
+
+  /* ========== 牌阵 ========== */
+  function buildBoard() {
+    pairs = cols * rows / 2;
+    // 从 10 种水果里随机挑 pairs 种，保证每局的花色组合都不同
+    const pick = shuffleArr(TYPES.map(function (_, i) { return i; })).slice(0, pairs);
+    const deck = [];
+    for (let i = 0; i < pairs; i++) { deck.push(pick[i]); deck.push(pick[i]); }
+    shuffleArr(deck);
+
+    cards = [];
+    for (let i = 0; i < deck.length; i++) {
+      cards.push({
+        t: deck[i],
+        r: Math.floor(i / cols),
+        c: i % cols,
+        up: false, matched: false,
+        f: 0, ffrom: 0, ft0: 0, target: 0, popAt: 0
+      });
+    }
+    upturned = []; lockUntil = 0; shake = null; reveal = null; pops = [];
+    cur = { r: 0, c: 0, on: false };
+    bornAt = performance.now();
+  }
+
+  /* ========== 局面流程 ========== */
+  function resetGame() {
+    steps = 0; score = 0; combo = 0; bestCombo = 0; matchedPairs = 0;
+    elapsed = 0; winBonus = 0; newRecord = false; overAt = 0;
+    stepsEl.textContent = '0';
+    scoreEl.textContent = '0';
+    timerEl.textContent = '00:00';
+    bestEl.textContent = bestOf();
+    buildBoard();
+    state = 'ready';
+    setPauseIcon(false);
+    showOverlay('ready');
+    render(performance.now());
+  }
+
+  function start() {
+    if (state === 'running') return;
+    if (state === 'over') {
+      if (performance.now() - overAt < 500) return;   // 防手滑把结算界面立刻点掉
+      resetGame();
+    }
+    if (state === 'ready' || state === 'paused') {
+      state = 'running';
+      lastTick = performance.now();
+    }
+    hideOverlay();
+    setPauseIcon(true);
+  }
+  function pause() {
+    if (state !== 'running') return;
+    state = 'paused';
+    setPauseIcon(false);
+    showOverlay('paused');
+  }
+  function togglePause() {
+    if (state === 'running') pause(); else start();
+  }
+
+  function winGame() {
+    state = 'over';
+    overAt = performance.now();
+    // 效率奖励：最少步数 = 对数，多翻的步数越多奖励越少
+    winBonus = Math.max(0, pairs * 2 - steps) * EFF_UNIT;
+    score += winBonus;
+    scoreEl.textContent = score;
+    if (score > bestOf()) {
+      saveBest(score);
+      newRecord = true;
+      bestEl.textContent = score;
+    }
+    setPauseIcon(false);
+    showOverlay('win');
+  }
+
+  /* ========== 翻牌逻辑 ========== */
+  // 命中越界 / 落在卡片之间的缝隙里 → -1
+  function pickIndex(clientX, clientY) {
+    const r = canvas.getBoundingClientRect();
+    if (!r.width || !r.height) return -1;
+    const vx = (clientX - r.left) / r.width * cw;
+    const vy = (clientY - r.top) / r.height * ch;
+    const gx = vx - pad, gy = vy - pad;
+    if (gx < 0 || gy < 0) return -1;
+    const cc = Math.floor(gx / (s + gap));
+    const rr = Math.floor(gy / (s + gap));
+    if (cc < 0 || cc >= cols || rr < 0 || rr >= rows) return -1;
+    if (gx - cc * (s + gap) > s || gy - rr * (s + gap) > s) return -1;
+    return rr * cols + cc;
+  }
+
+  function busy(now) {
+    return now < lockUntil || upturned.length >= 2;
+  }
+
+  // 返回 true 表示这次点击确实翻了一张牌
+  function tap(i, now) {
+    if (state !== 'running') return false;
+    if (typeof now !== 'number') now = performance.now();
+    const c = cards[i];
+    if (!c || c.matched || c.up) return false;
+    if (busy(now)) return false;
+
+    c.up = true;
+    upturned.push(i);
+    reveal = null;                       // 手动翻牌即打断提示
+    if (upturned.length === 1) return true;
+
+    steps++;
+    stepsEl.textContent = steps;
+
+    const a = cards[upturned[0]], b = cards[upturned[1]];
+    if (a.t === b.t) {
+      // 配对成功：清掉「翻开」标记、只留 matched，翻开状态与 upturned 永远一一对应
+      a.up = false; b.up = false;
+      a.matched = true; b.matched = true;
+      matchedPairs++;
+      combo++;
+      if (combo > bestCombo) bestCombo = combo;
+      const gain = PAIR_SCORE + COMBO_STEP * (combo - 1);
+      score += gain;
+      scoreEl.textContent = score;
+      a.popAt = now + FLIP_DUR;
+      b.popAt = now + FLIP_DUR;
+      const rb = rectOf(upturned[1]);
+      pushPop(rb.x + s / 2, rb.y, '+' + gain + (combo > 1 ? '  连击×' + combo : ''),
+              combo > 1 ? '#ef7a35' : '#1a9c63');
+      upturned = [];                     // 配对成功：不用等动画，马上能继续翻
+      if (matchedPairs === pairs) winGame();
+      return true;
+    }
+
+    // 翻错了：停一下再盖回去，连击清零
+    combo = 0;
+    lockUntil = now + FLIP_DUR + MISS_HOLD;
+    shake = { ids: [upturned[0], upturned[1]], t0: now };
+    return true;
+  }
+
+  function pushPop(x, y, text, color) {
+    pops.push({ x: x, y: y, text: text, color: color, t0: performance.now() });
+  }
+
+  function doHint() {
+    if (state === 'ready' || state === 'paused') { start(); return; }
+    if (state !== 'running') return;
+    if (upturned.length) { toast('等这一轮翻完再提示'); return; }
+    const rest = [];
+    for (let i = 0; i < cards.length; i++) if (!cards[i].matched) rest.push(i);
+    if (rest.length < 2) return;
+
+    shuffleArr(rest);
+    const a = rest[0];
+    let b = -1;
+    for (let k = 1; k < rest.length; k++) {
+      if (cards[rest[k]].t === cards[a].t) { b = rest[k]; break; }
+    }
+    if (b < 0) b = rest[1];
+
+    const now = performance.now();
+    reveal = { ids: [a, b], t0: now, until: now + HINT_DUR };
+    if (score > 0) {
+      score = Math.max(0, score - HINT_COST);
+      scoreEl.textContent = score;
+      toast('已揭示一对（-' + HINT_COST + ' 分）');
+    } else {
+      toast('已揭示一对');
+    }
+  }
+
+  function setLevel(L, announce) {
+    lv = L;
+    cols = lv.cols;
+    rows = lv.rows;
+    try { localStorage.setItem(STORE_LEVEL, lv.id); } catch (e) {}
+    levelLabel.textContent = '难度 · ' + lv.name;
+    resetGame();
+    resize();
+    if (announce) toast('已切换到「' + lv.name + '」' + cols + '×' + rows + ' · 共 ' + pairs + ' 对');
+  }
+  function cycleLevel() {
+    const k = LEVELS.indexOf(lv);
+    setLevel(LEVELS[(k + 1) % LEVELS.length], true);
+  }
+
+  /* ========== 每帧推进 ========== */
+  function update(now) {
+    if (state === 'running') {
+      const dt = Math.min(now - lastTick, 200);
+      lastTick = now;
+      elapsed += dt;
+      timerEl.textContent = fmt(elapsed);
+    } else {
+      lastTick = now;
+    }
+
+    // 翻牌进度：目标值一变就重新起算，用时间插值，不做累加
+    for (let i = 0; i < cards.length; i++) {
+      const c = cards[i];
+      const target = (c.up || c.matched) ? 1 : 0;
+      if (c.target !== target) { c.ffrom = c.f; c.ft0 = now; c.target = target; }
+      const k = Math.min(1, Math.max(0, (now - c.ft0) / FLIP_DUR));
+      c.f = c.ffrom + (target - c.ffrom) * k;
+    }
+
+    // 翻错的盖回去
+    if (upturned.length === 2 && lockUntil && now >= lockUntil) {
+      const a = cards[upturned[0]], b = cards[upturned[1]];
+      a.up = false; b.up = false;
+      upturned = []; lockUntil = 0;
+    }
+
+    if (reveal && now > reveal.until + FLIP_DUR) reveal = null;
+    if (shake && now - shake.t0 > SHAKE_DUR) shake = null;
+    if (pops.length) pops = pops.filter(function (p) { return now - p.t0 < 900; });
+  }
+
+  /* ========== 渲染 ========== */
+  function drawImageFit(el, x, y, w, h) {
+    const iw = el.naturalWidth || 0, ih = el.naturalHeight || 0;
+    if (!iw || !ih) { ctx.drawImage(el, x, y, w, h); return; }
+    const k = IMG_FIT === 'contain' ? Math.min(w / iw, h / ih) : Math.max(w / iw, h / ih);
+    const dw = iw * k, dh = ih * k;
+    ctx.drawImage(el, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  }
+
+  // 牌背：绿色渐变 + 内描边 + 中央小花标记
+  function drawBack(x, y, w) {
+    const rr = cardRadius(w);
+    const g = ctx.createLinearGradient(x, y, x + w, y + w);
+    g.addColorStop(0, '#35c489');
+    g.addColorStop(1, '#149b60');
+    rrect(x, y, w, w, rr);
+    ctx.fillStyle = g;
+    ctx.fill();
+
+    rrect(x + w * 0.085, y + w * 0.085, w * 0.83, w * 0.83, rr * 0.7);
+    ctx.strokeStyle = 'rgba(255,255,255,.32)';
+    ctx.lineWidth = Math.max(1, w * 0.022);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(x + w / 2, y + w / 2);
+    const R = w * 0.2;
+    ctx.fillStyle = 'rgba(255,255,255,.88)';
+    for (let i = 0; i < 3; i++) {
+      const a = -Math.PI / 2 + i * Math.PI * 2 / 3;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * R * 0.78, Math.sin(a) * R * 0.78, R * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, R * 0.44, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 牌面：统一「浅色底 + 描边」的卡面，再叠自定义图片（完整显示不裁切）；
+  // 没有图片就画矢量水果兜底。素材是透明底 PNG，先铺底才能让留白处不露棋盘。
+  function drawFace(c, x, y, w) {
+    const t = TYPES[c.t];
+    const rr = cardRadius(w);
+
+    rrect(x, y, w, w, rr);
+    ctx.fillStyle = t.light;
+    ctx.fill();
+    ctx.strokeStyle = rgba(t.color, 0.42);
+    ctx.lineWidth = Math.max(1, w * 0.02);
+    ctx.stroke();
+
+    const img = USE_IMAGES ? customImg[c.t] : null;
+    if (img) {
+      ctx.save();
+      rrect(x, y, w, w, rr);
+      ctx.clip();
+      drawImageFit(img, x, y, w, w);
+      ctx.restore();
+      return;
+    }
+
+    ctx.save();
+    ctx.translate(x + w / 2, y + w / 2);
+    drawGlyph(t.key, w * 0.3, t);
+    ctx.restore();
+  }
+
+  function drawGlyph(kind, r, t) {
+    const c = t.color;
+    ctx.fillStyle = c;
+    ctx.strokeStyle = c;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (kind === 'orange') {
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.98, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.55)';
+      ctx.lineWidth = r * 0.1;
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9);
+        ctx.stroke();
+      }
+      ctx.beginPath(); ctx.ellipse(r * 0.3, -r * 0.92, r * 0.42, r * 0.2, -0.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#3fb56f'; ctx.fill();
+
+    } else if (kind === 'grape') {
+      const pos = [[-0.62, 0.1], [0, 0.1], [0.62, 0.1],
+                   [-0.32, 0.62], [0.32, 0.62], [0, 1.08], [-0.62, -0.42], [0.62, -0.42]];
+      pos.forEach(function (p) {
+        ctx.beginPath(); ctx.arc(p[0] * r, p[1] * r, r * 0.36, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.strokeStyle = '#7a9a2e';
+      ctx.lineWidth = r * 0.16;
+      ctx.beginPath(); ctx.moveTo(0, -r * 0.6); ctx.lineTo(0, -r * 1.05); ctx.stroke();
+
+    } else if (kind === 'pomegranate') {
+      ctx.beginPath(); ctx.arc(0, r * 0.12, r * 0.94, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.34, -r * 0.74);
+      ctx.lineTo(-r * 0.14, -r * 1.16);
+      ctx.lineTo(0, -r * 0.72);
+      ctx.lineTo(r * 0.16, -r * 1.16);
+      ctx.lineTo(r * 0.36, -r * 0.7);
+      ctx.closePath();
+      ctx.fillStyle = '#b7304b'; ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.62)';
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * r * 0.42, r * 0.12 + Math.sin(a) * r * 0.42, r * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+    } else if (kind === 'avocado') {
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 1.05);
+      ctx.bezierCurveTo(r * 0.78, -r * 0.72, r * 0.9, r * 0.32, 0, r * 1.02);
+      ctx.bezierCurveTo(-r * 0.9, r * 0.32, -r * 0.78, -r * 0.72, 0, -r * 1.05);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = t.light;
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.66);
+      ctx.bezierCurveTo(r * 0.5, -r * 0.44, r * 0.58, r * 0.28, 0, r * 0.74);
+      ctx.bezierCurveTo(-r * 0.58, r * 0.28, -r * 0.5, -r * 0.44, 0, -r * 0.66);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#8a5a2b';
+      ctx.beginPath(); ctx.arc(0, r * 0.2, r * 0.33, 0, Math.PI * 2); ctx.fill();
+
+    } else if (kind === 'starfruit') {
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const rad = (i % 2 ? r * 0.5 : r * 1.08);
+        const a = -Math.PI / 2 + i * Math.PI / 5;
+        const x = Math.cos(a) * rad, y = Math.sin(a) * rad;
+        if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.55)';
+      ctx.lineWidth = r * 0.1;
+      ctx.beginPath(); ctx.moveTo(-r * 0.5, 0); ctx.lineTo(r * 0.5, 0); ctx.stroke();
+
+    } else if (kind === 'pineapple') {
+      ctx.beginPath(); ctx.ellipse(0, r * 0.22, r * 0.74, r * 0.84, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(120,70,10,.4)';
+      ctx.lineWidth = r * 0.08;
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.72, r * 0.22 + i * r * 0.34 - r * 0.5);
+        ctx.lineTo(r * 0.72, r * 0.22 + i * r * 0.34 + r * 0.5);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(r * 0.72, r * 0.22 + i * r * 0.34 - r * 0.5);
+        ctx.lineTo(-r * 0.72, r * 0.22 + i * r * 0.34 + r * 0.5);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#3fb56f';
+      for (let i = -1; i <= 1; i++) {
+        ctx.save();
+        ctx.rotate(i * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.16, -r * 0.55);
+        ctx.quadraticCurveTo(0, -r * 1.3, r * 0.16, -r * 0.55);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+
+    } else if (kind === 'watermelon') {
+      ctx.beginPath(); ctx.arc(0, 0, r * 1.0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.78, 0, Math.PI * 2);
+      ctx.fillStyle = t.light; ctx.fill();
+      ctx.fillStyle = t.color;
+      ctx.beginPath(); ctx.arc(0, r * 0.06, r * 0.58, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#243b28';
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+        ctx.save();
+        ctx.translate(Math.cos(a) * r * 0.34, r * 0.06 + Math.sin(a) * r * 0.34);
+        ctx.rotate(a);
+        ctx.beginPath(); ctx.ellipse(0, 0, r * 0.13, r * 0.07, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+    } else if (kind === 'strawberry') {
+      ctx.beginPath();
+      ctx.moveTo(0, r * 1.06);
+      ctx.bezierCurveTo(-r * 1.02, r * 0.28, -r * 0.86, -r * 0.72, 0, -r * 0.62);
+      ctx.bezierCurveTo(r * 0.86, -r * 0.72, r * 1.02, r * 0.28, 0, r * 1.06);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.75)';
+      for (let i = 0; i < 6; i++) {
+        const ax = [-0.42, 0.42, -0.2, 0.2, 0, 0][i], ay = [-0.2, -0.2, 0.26, 0.26, 0.66, -0.44][i];
+        ctx.beginPath();
+        ctx.ellipse(ax * r, ay * r, r * 0.1, r * 0.07, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#3fb56f';
+      for (let i = -1; i <= 1; i++) {
+        ctx.save();
+        ctx.rotate(i * 0.62);
+        ctx.beginPath();
+        ctx.ellipse(0, -r * 0.72, r * 0.2, r * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+    } else if (kind === 'dragonfruit') {
+      ctx.beginPath(); ctx.ellipse(0, r * 0.1, r * 0.78, r * 0.96, 0, 0, Math.PI * 2); ctx.fill();
+      const c2 = t.color;
+      for (let i = 0; i < 6; i++) {
+        const a = -Math.PI * 0.9 + i * Math.PI * 0.36;
+        ctx.save();
+        ctx.translate(Math.cos(a) * r * 0.6, r * 0.1 + Math.sin(a) * r * 0.72);
+        ctx.rotate(a + 0.4);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * 0.3, r * 0.13, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#6fbe52'; ctx.fill();
+        ctx.restore();
+      }
+      ctx.fillStyle = '#fdf3f7';
+      ctx.beginPath(); ctx.ellipse(0, r * 0.1, r * 0.5, r * 0.62, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(30,40,34,.6)';
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * r * 0.3, r * 0.1 + Math.sin(a) * r * 0.38, r * 0.07, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = c2;
+
+    } else {
+      // kiwi：猕猴桃
+      ctx.beginPath(); ctx.arc(0, 0, r * 1.0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d8e8a8';
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.84, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#8fbf3f';
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.68, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fdfdf4';
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(30,50,20,.72)';
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a) * r * 0.44, Math.sin(a) * r * 0.44, r * 0.09, r * 0.06, a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // 每张卡这一帧该怎么画（位置 / 缩放 / 透明度 / 正反面）——纯计算，方便自测直接校验
+  function cardDrawState(i, now) {
+    const c = cards[i];
+    const R = rectOf(i);
+    let x = R.x, y = R.y;
+
+    // 翻错抖动（幅度压在留白内，绝不越出画板）
+    if (shake && (shake.ids[0] === i || shake.ids[1] === i)) {
+      const k = (now - shake.t0) / SHAKE_DUR;
+      if (k >= 0 && k < 1) x += Math.sin(k * Math.PI * 6) * shakeAmp() * (1 - k);
+    }
+
+    let sc = 1, alpha = 1;
+    const bt = now - bornAt - ((c.r * 3 + c.c * 5) % 8) * 22;
+    if (bt < BORN_DUR) {
+      const k = Math.max(0, Math.min(1, bt / BORN_DUR));
+      const e = 1 - Math.pow(1 - k, 3);
+      sc *= 0.72 + 0.28 * e;
+      alpha *= k;
+    }
+    if (c.popAt && now < c.popAt + POP_DUR) {
+      const k = Math.max(0, (now - c.popAt) / POP_DUR);
+      sc *= 1 + Math.sin(Math.PI * k) * 0.1;
+    }
+    if (c.matched) { sc *= 0.95; alpha *= 0.74; }
+
+    // 翻牌进度：0 = 背面，1 = 正面；同时用于正面/背面的切换
+    let f = c.f;
+    const rf = revealF(now, i);
+    if (rf >= 0 && !c.up && !c.matched) f = rf;
+    const fs = flipState(f);
+
+    return { i: i, x: x, y: y, w: s, sc: sc, alpha: Math.max(0, Math.min(1, alpha)),
+             sx: fs.sx, front: fs.front, matched: c.matched };
+  }
+
+  function render(now) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cw, ch);
+
+    ctx.fillStyle = '#e7eee9';
+    ctx.fillRect(0, 0, cw, ch);
+
+    const rr = cardRadius(s);
+
+    for (let i = 0; i < cards.length; i++) {
+      const st = cardDrawState(i, now);
+
+      ctx.save();
+      ctx.globalAlpha = st.alpha;
+      ctx.translate(st.x + s / 2, st.y + s / 2);
+      ctx.scale(st.sc * st.sx, st.sc);
+
+      // 卡片底部的淡投影（比 shadowBlur 便宜，手机上稳）
+      rrect(-s / 2, -s / 2 + s * 0.035, s, s, rr);
+      ctx.fillStyle = 'rgba(28,70,52,.10)';
+      ctx.fill();
+
+      if (!st.front) drawBack(-s / 2, -s / 2, s);
+      else drawFace(cards[i], -s / 2, -s / 2, s);
+
+      if (st.matched) {
+        const o = Math.max(1.5, s * 0.035);
+        rrect(-s / 2 - o, -s / 2 - o, s + o * 2, s + o * 2, rr + o);
+        ctx.strokeStyle = rgba('#1a9c63', 0.5);
+        ctx.lineWidth = Math.max(1.5, s * 0.035);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 键盘光标
+    if (cur.on && state === 'running') {
+      const R = rectOf(cur.r * cols + cur.c);
+      const o = Math.max(2, s * 0.045);
+      ctx.save();
+      ctx.setLineDash([s * 0.16, s * 0.12]);
+      ctx.lineDashOffset = -now / 40;
+      rrect(R.x - o, R.y - o, s + o * 2, s + o * 2, cardRadius(s) + o);
+      ctx.strokeStyle = rgba('#1a9c63', 0.62);
+      ctx.lineWidth = Math.max(2, s * 0.045);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 浮动加分
+    for (let i = 0; i < pops.length; i++) {
+      const p = pops[i];
+      const k = Math.min(1, (now - p.t0) / 900);
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - k * k);
+      ctx.fillStyle = p.color;
+      ctx.font = '800 ' + Math.round(Math.max(12, s * 0.26)) + 'px ' + FONT;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.lineWidth = Math.max(3, s * 0.06);
+      ctx.strokeStyle = 'rgba(255,255,255,.9)';
+      ctx.strokeText(p.text, p.x, p.y - 6 - k * Math.max(20, s * 0.4));
+      ctx.fillText(p.text, p.x, p.y - 6 - k * Math.max(20, s * 0.4));
+      ctx.restore();
+    }
+  }
+
+  /* ========== 主循环 ========== */
+  function loop(now) {
+    requestAnimationFrame(loop);
+    update(now);
+    render(now);
+  }
+
+  /* ========== 遮罩层 ========== */
+  function showOverlay(type) {
+    let html = '';
+    if (type === 'ready') {
+      html = '<div class="c-title">翻牌配对</div>' +
+             '<div class="c-desc">点开两张卡，找出<b>相同的奶蛙</b><br>' +
+             '不一样的会自己盖回去<br>' +
+             '连续配对成功有连击奖励<br>' +
+             '<b>' + lv.name + '</b> · ' + cols + '×' + rows + ' · 共 ' + pairs + ' 对' +
+             '<span class="tip">点一下棋盘就开始计时<br>电脑上可用方向键选牌、回车翻开</span></div>';
+    } else if (type === 'paused') {
+      html = '<div class="c-title">已暂停</div>' +
+             '<div class="c-desc">点击屏幕或按空格继续</div>';
+    } else if (type === 'win') {
+      html = '<div class="badge">' + (newRecord ? '新纪录！' : '全部配对') + '</div>' +
+             '<div class="c-title">通关啦</div>' +
+             '<div class="c-desc">用时 <b>' + fmt(elapsed) + '</b><br>' +
+             '步数 <b>' + steps + '</b>　得分 <b>' + score + '</b>' +
+             (winBonus ? '<span class="orange">（含效率奖励 ' + winBonus + '）</span>' : '') +
+             '<br>最高连击 <span class="orange">×' + bestCombo + '</span>' +
+             '<br>' + lv.name + ' 最高分 <span class="orange">' + bestOf() + '</span></div>' +
+             '<button class="c-btn" id="againBtn">再来一局</button>';
+    }
+    ovCard.innerHTML = html;
+    overlay.classList.add('show');
+    const again = document.getElementById('againBtn');
+    if (again) {
+      again.addEventListener('click', function (e) {
+        e.stopPropagation();
+        resetGame();
+        start();
+      });
+    }
+  }
+  function hideOverlay() { overlay.classList.remove('show'); }
+
+  /* ========== 暂停按钮图标 ========== */
+  const SVG_PAUSE =
+    '<svg viewBox="0 0 24 24">' +
+      '<rect class="fill-icon" x="6.5" y="5" width="3.6" height="14" rx="1.4"/>' +
+      '<rect class="fill-icon" x="13.9" y="5" width="3.6" height="14" rx="1.4"/>' +
+    '</svg>';
+  const SVG_PLAY =
+    '<svg viewBox="0 0 24 24">' +
+      '<path class="fill-icon" d="M7.6 5.05a1.1 1.1 0 0 1 1.66-.95l9.1 5.35a1.1 1.1 0 0 1 0 1.9l-9.1 5.35a1.1 1.1 0 0 1-1.66-.95z"/>' +
+    '</svg>';
+
+  function setPauseIcon(playing) {
+    pauseIcon.innerHTML = playing ? SVG_PAUSE : SVG_PLAY;
+    btnPause.setAttribute('aria-label', playing ? '暂停' : '继续');
+  }
+
+  /* ========== 输入 ========== */
+  canvas.addEventListener('pointerdown', function (e) {
+    if (state !== 'running') return;
+    const i = pickIndex(e.clientX, e.clientY);
+    if (i < 0) return;
+    e.preventDefault();
+    cur.on = false;
+    tap(i, performance.now());
+  }, { passive: false });
+
+  canvas.addEventListener('click', function () {
+    if (state === 'ready' || state === 'paused') start();
+    else if (state === 'over' && performance.now() - overAt > 700) { resetGame(); start(); }
+  });
+
+  ovCard.addEventListener('click', function () {
+    if (state === 'ready' || state === 'paused') start();
+  });
+
+  window.addEventListener('keydown', function (e) {
+    const k = e.key;
+    if (k === ' ' || k === 'Escape') { e.preventDefault(); togglePause(); return; }
+    if (k === 'Enter') {
+      e.preventDefault();
+      if (state === 'ready' || state === 'paused' || state === 'over') { start(); return; }
+      cur.on = true;
+      tap(cur.r * cols + cur.c, performance.now());
+      return;
+    }
+    if (k === 'h' || k === 'H') { doHint(); return; }
+    if (k === 'r' || k === 'R') { resetGame(); toast('已重置'); return; }
+    if (k === 'n' || k === 'N') { cycleLevel(); return; }
+
+    const dir = k === 'ArrowUp' || k === 'w' || k === 'W' ? [-1, 0] :
+                k === 'ArrowDown' || k === 's' || k === 'S' ? [1, 0] :
+                k === 'ArrowLeft' || k === 'a' || k === 'A' ? [0, -1] :
+                k === 'ArrowRight' || k === 'd' || k === 'D' ? [0, 1] : null;
+    if (!dir) return;
+    e.preventDefault();
+    cur.on = true;
+    cur.r = Math.max(0, Math.min(rows - 1, cur.r + dir[0]));
+    cur.c = Math.max(0, Math.min(cols - 1, cur.c + dir[1]));
+  });
+
+  btnHint.addEventListener('click', function (e) { e.stopPropagation(); doHint(); });
+  btnLevel.addEventListener('click', function (e) { e.stopPropagation(); cycleLevel(); });
+
+  btnPause.addEventListener('click', function (e) { e.stopPropagation(); togglePause(); });
+
+  btnReset.addEventListener('click', function (e) {
+    e.stopPropagation();
+    resetGame();
+    toast('已重置');
+  });
+
+  btnBack.addEventListener('click', function (e) {
+    e.stopPropagation();
+    /* 返回游戏主页 */
+    window.location.href = '../index.html';
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && state === 'running') pause();
+  });
+
+  /* ========== 轻提示 ========== */
+  let toastTimer = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1400);
+  }
+
+  /* ========== 启动 ========== */
+  loadCustomImages();
+  setLevel(loadLevel(), false);
+  resize();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
